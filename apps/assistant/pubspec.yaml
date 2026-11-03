@@ -1,0 +1,45 @@
+name: personal_assistant
+description: "개인비서 — 채널·대화·하드·비우기·금고를 하나로"
+publish_to: none
+version: 1.0.0+1
+resolution: workspace
+environment:
+  sdk: ^3.13.0
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  assistant_core:
+    path: ../../packages/core
+  channel_biseo:
+    path: ../../packages/channel
+  ai_chat_organizer:
+    path: ../../packages/chats
+  binugi:
+    path: ../../packages/declutter
+  account_vault:
+    path: ../../packages/vault
+  path_provider: 2.1.6
+  path: 1.9.1
+  http: 1.6.0
+  url_launcher: 6.3.3
+  webview_flutter: ^4.13.0
+  flutter_secure_storage: 11.2.0
+  speech_to_text: 7.5.0
+  flutter_tts: 4.2.5
+  file_selector: 1.1.0
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: 6.0.0
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/icons/
+  fonts:
+    - family: NotoSansKR
+      fonts:
+        - asset: assets/fonts/NotoSansKR-Regular.ttf
+        - asset: assets/fonts/NotoSansKR-Bold.ttf
+          weight: 700

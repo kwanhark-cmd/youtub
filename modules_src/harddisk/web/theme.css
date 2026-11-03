@@ -1,0 +1,190 @@
+/* =====================================================================
+   테마 한 파일 — 색·크기·간격·둥글기·그림자·애니메이션 시간은 모두 여기에만.
+   모든 화면(app.css)은 이 값(var(--...))만 사용한다.
+   ===================================================================== */
+@font-face { font-family: "Pretendard"; font-weight: 400; font-display: swap;
+  src: url("assets/fonts/Pretendard-Regular.subset.woff2") format("woff2"); }
+@font-face { font-family: "Pretendard"; font-weight: 700; font-display: swap;
+  src: url("assets/fonts/Pretendard-Bold.subset.woff2") format("woff2"); }
+
+:root {
+  /* 글꼴 */
+  --font: "Pretendard", "Malgun Gothic", "Apple SD Gothic Neo", "Noto Sans KR", system-ui, sans-serif;
+  --fs-base: 18px;          /* 글씨 크기 1단계(보통) */
+  /* 글자 위계 4단계: 크게 보여줄 것(display) > 제목(title) > 본문(body) > 보조(small) */
+  --fs-small: 0.85rem;
+  --fs-body: 1rem;
+  --fs-title: 1.35rem;
+  --fs-hero: 1.9rem;
+  --lh: 1.55;
+
+  /* 크기·간격·둥글기 */
+  --btn-h: 56px;            /* 버튼 최소 높이 */
+  --touch: 48px;            /* 터치 영역 최소 */
+  --radius: 16px;
+  --radius-sm: 12px;
+  --radius-pill: 999px;
+  --gap-xs: 6px;
+  --gap-s: 10px;
+  --gap: 16px;
+  --gap-l: 24px;
+  --gap-xl: 36px;
+  --gap-card: calc(var(--gap) * 1.5);   /* 카드 사이 간격(1.5배) */
+  --search-h: 68px;                      /* 홈 검색창 높이(64px 이상) */
+  --face: 84px;                          /* 사람 동그란 얼굴 */
+  --page-max: 1100px;
+  --tile-min: 240px;
+  --thumb-min: 140px;
+  --icon-tile: 72px;
+  --icon-btn: 30px;
+
+  /* 움직임 */
+  --dur-fast: 150ms;
+  --dur: 250ms;
+  --dur-slow: 400ms;
+  --ease: cubic-bezier(.2, .8, .2, 1.05);
+
+  /* ---- 밝은 모드 색 ---- */
+  --c-bg: #f3f5fa;
+  --c-surface: #ffffff;
+  --c-surface-2: #e8edf6;
+  --c-text: #0f172a;
+  --c-muted: #475569;
+  --c-border: #cbd5e1;
+  --c-primary: #1d4ed8;          /* 주요색 */
+  --c-on-primary: #ffffff;
+  --c-accent: #c2410c;           /* 강조색(주요 동작 버튼) */
+  --c-on-accent: #ffffff;
+  --c-ok: #15803d;               /* 초록 = 완료·연결됨 */
+  --c-on-ok: #ffffff;
+  --c-progress: #0369a1;         /* 파랑 = 진행 중 */
+  --c-on-progress: #ffffff;
+  --c-warn: #facc15;             /* 노랑 = 확인 필요 */
+  --c-on-warn: #3b2300;
+  --c-danger: #b91c1c;           /* 빨강 = 문제·주의, 위험 동작 */
+  --c-on-danger: #ffffff;
+  --c-neutral: #475569;          /* 보조 버튼 */
+  --c-on-neutral: #ffffff;
+  --c-focus: #f59e0b;
+  --c-highlight: #fde68a;
+  --c-on-highlight: #1f1300;
+  --c-overlay: rgba(15, 23, 42, .55);
+  --c-card-btn: var(--c-accent);      /* 강조 카드(오늘 할 일) 안의 버튼 */
+  /* 종류별 색: 사진=파랑, 영상=보라, 문서=주황, 일기·메모=초록, 사람·연락처=분홍 (타일 배경과 목록 아이콘에 같은 색) */
+  --k-photo: #2563eb;  --k-photo-bg: #dbeafe;
+  --k-video: #7c3aed;  --k-video-bg: #ede9fe;
+  --k-doc: #ea580c;    --k-doc-bg: #ffedd5;
+  --k-diary: #16a34a;  --k-diary-bg: #dcfce7;
+  --k-person: #db2777; --k-person-bg: #fce7f3;
+  --k-tool: #0f766e;   --k-tool-bg: #ccfbf1;
+  --card-border: 0 solid transparent;  /* 테두리만 있는 상자 금지: 채운 카드 + 부드러운 그림자 */
+  --shadow-soft: 0 1px 2px rgba(15, 23, 42, .06), 0 6px 20px rgba(15, 23, 42, .08);
+  --c-on-card-btn: var(--c-on-accent);
+
+  /* 입체감(그림자) — 메인 타일·주요 버튼에만 */
+  --shadow-3d: 0 6px 0 rgba(15, 23, 42, .18), 0 10px 24px rgba(15, 23, 42, .14);
+  --shadow-3d-press: 0 2px 0 rgba(15, 23, 42, .18), 0 4px 10px rgba(15, 23, 42, .12);
+  --shadow-flat: 0 1px 3px rgba(15, 23, 42, .12);
+  --bevel: inset 0 2px 0 rgba(255, 255, 255, .35), inset 0 -3px 0 rgba(0, 0, 0, .12);
+  --border-w: 1px;
+}
+
+/* 글씨 크기 2·3단계 */
+:root[data-font="1"] { --fs-base: 22px; --tile-min: 280px; --thumb-min: 160px; }
+:root[data-font="2"] { --fs-base: 26px; --tile-min: 320px; --thumb-min: 180px; --icon-tile: 84px; }
+
+/* ---- 어두운 모드 ---- */
+:root[data-theme="dark"] {
+  --c-bg: #0b1220;
+  --c-surface: #1b2740;   /* 바탕보다 한 단계 밝은 카드 */
+  --c-surface-2: #26355a;
+  --c-text: #f1f5f9;
+  --c-muted: #cbd5e1;
+  --c-border: #33435f;
+  --c-primary: #93c5fd;
+  --c-on-primary: #0b1220;
+  --c-accent: #fb923c;
+  --c-on-accent: #1a0a00;
+  --c-ok: #4ade80;
+  --c-on-ok: #052e16;
+  --c-progress: #38bdf8;
+  --c-on-progress: #082f49;
+  --c-warn: #fde047;
+  --c-on-warn: #3b2300;
+  --c-danger: #f87171;
+  --c-on-danger: #1f0303;
+  --c-neutral: #94a3b8;
+  --c-on-neutral: #0b1220;
+  --c-highlight: #854d0e;
+  --c-on-highlight: #fef9c3;
+  --c-overlay: rgba(0, 0, 0, .7);
+  --shadow-3d: 0 6px 0 rgba(0, 0, 0, .55), 0 10px 24px rgba(0, 0, 0, .45);
+  --shadow-3d-press: 0 2px 0 rgba(0, 0, 0, .55), 0 4px 10px rgba(0, 0, 0, .4);
+  --shadow-flat: 0 1px 3px rgba(0, 0, 0, .5);
+  --shadow-soft: 0 1px 2px rgba(0, 0, 0, .4), 0 8px 22px rgba(0, 0, 0, .35);
+  --k-photo: #60a5fa;  --k-photo-bg: #172c52;
+  --k-video: #a78bfa;  --k-video-bg: #2a1f4d;
+  --k-doc: #fb923c;    --k-doc-bg: #3d2512;
+  --k-diary: #4ade80;  --k-diary-bg: #133322;
+  --k-person: #f472b6; --k-person-bg: #401a30;
+  --k-tool: #2dd4bf;   --k-tool-bg: #113a37;
+}
+
+/* ---- 고대비 모드 ---- */
+:root[data-theme="contrast"] {
+  --c-bg: #000000;
+  --c-surface: #000000;
+  --c-surface-2: #1a1a1a;
+  --c-text: #ffffff;
+  --c-muted: #ffffff;
+  --c-border: #ffffff;
+  --c-primary: #ffff00;
+  --c-on-primary: #000000;
+  --c-accent: #ffff00;
+  --c-on-accent: #000000;
+  --c-ok: #00ff66;
+  --c-on-ok: #000000;
+  --c-progress: #00e5ff;
+  --c-on-progress: #000000;
+  --c-warn: #ffff00;
+  --c-on-warn: #000000;
+  --c-danger: #ff6b6b;
+  --c-on-danger: #000000;
+  --c-neutral: #ffffff;
+  --c-on-neutral: #000000;
+  --c-focus: #00e5ff;
+  --c-highlight: #ffff00;
+  --c-on-highlight: #000000;
+  --c-overlay: rgba(0, 0, 0, .85);
+  --c-card-btn: #000000;
+  --c-on-card-btn: #ffff00;
+  --shadow-3d: 0 0 0 2px #ffffff;
+  --shadow-3d-press: 0 0 0 3px #ffff00;
+  --shadow-flat: 0 0 0 1px #ffffff;
+  --bevel: none;
+  --border-w: 2px;
+  --card-border: 2px solid #ffffff;
+  --shadow-soft: none;
+  --k-photo: #7cc4ff;  --k-photo-bg: #000000;
+  --k-video: #d6b4ff;  --k-video-bg: #000000;
+  --k-doc: #ffb36b;    --k-doc-bg: #000000;
+  --k-diary: #6dff9e;  --k-diary-bg: #000000;
+  --k-person: #ff9ad5; --k-person-bg: #000000;
+  --k-tool: #5ff5e0;   --k-tool-bg: #000000;
+}
+
+/* ---- 움직임 줄이기 ---- */
+:root[data-motion="reduce"] { --dur-fast: 0ms; --dur: 0ms; --dur-slow: 0ms; }
+@media (prefers-reduced-motion: reduce) {
+  :root { --dur-fast: 0ms; --dur: 0ms; --dur-slow: 0ms; }
+}
+
+/* ---- 색 테마(설정 > 앱 꾸미기). 고대비 모드에서는 쓰지 않는다 ---- */
+:root[data-palette="green"]:not([data-theme="contrast"]) { --c-primary: #15803d; }
+:root[data-palette="purple"]:not([data-theme="contrast"]) { --c-primary: #7e22ce; }
+:root[data-palette="orange"]:not([data-theme="contrast"]) { --c-primary: #c2410c; --c-accent: #1d4ed8; }
+:root[data-palette="pink"]:not([data-theme="contrast"]) { --c-primary: #be185d; }
+:root[data-theme="dark"][data-palette="green"] { --c-primary: #4ade80; }
+:root[data-theme="dark"][data-palette="purple"] { --c-primary: #d8b4fe; }
+:root[data-theme="dark"][data-palette="orange"] { --c-primary: #fdba74; --c-accent: #93c5fd; --c-on-accent: #0b1220; }
+:root[data-theme="dark"][data-palette="pink"] { --c-primary: #f9a8d4; }

@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleDisplayName</key>
+	<string>개인비서</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>말로 명령하고 물건 사연을 남길 때 마이크를 사용해요. 허락하지 않아도 글자로 쓸 수 있어요.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>말한 내용을 글자로 바꾸기 위해 음성 인식을 사용해요.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>물건 사진을 찍으려면 카메라가 필요해요.</string>
+	<key>NSFaceIDUsageDescription</key>
+	<string>금고를 지문·얼굴로 열 때 사용해요.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>물건 사진을 고를 때 사진 보관함을 사용해요.</string>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>같은 집 PC의 하드 자료 찾기 엔진에 연결할 때 사용해요.</string>
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsLocalNetworking</key>
+		<true/>
+		<key>NSAllowsArbitraryLoadsInWebContent</key>
+		<true/>
+	</dict>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>$(DEVELOPMENT_LANGUAGE)</string>
+	<key>CFBundleExecutable</key>
+	<string>$(EXECUTABLE_NAME)</string>
+	<key>CFBundleIconFile</key>
+	<string></string>
+	<key>CFBundleIdentifier</key>
+	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>CFBundleName</key>
+	<string>$(PRODUCT_NAME)</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>CFBundleShortVersionString</key>
+	<string>$(FLUTTER_BUILD_NAME)</string>
+	<key>CFBundleVersion</key>
+	<string>$(FLUTTER_BUILD_NUMBER)</string>
+	<key>LSMinimumSystemVersion</key>
+	<string>$(MACOSX_DEPLOYMENT_TARGET)</string>
+	<key>NSHumanReadableCopyright</key>
+	<string>$(PRODUCT_COPYRIGHT)</string>
+	<key>NSMainNibFile</key>
+	<string>MainMenu</string>
+	<key>NSPrincipalClass</key>
+	<string>NSApplication</string>
+</dict>
+</plist>

@@ -1,0 +1,18 @@
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+node_modules/
+dist/
+build/
+*.spec
+.venv/
+# 사용자 데이터·키 파일은 절대 커밋하지 않음
+data/
+*.key
+*.pem
+secrets*.json
+client_secret*.json
+token*.json
+.env
+test-results/

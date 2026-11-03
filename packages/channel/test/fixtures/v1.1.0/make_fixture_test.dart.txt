@@ -1,0 +1,63 @@
+import 'dart:convert';
+import 'dart:io';
+
+import 'package:channel_biseo/app/app.dart';
+import 'package:channel_biseo/app/services.dart';
+import 'package:channel_biseo/core/logger.dart';
+import 'package:channel_biseo/core/secret_store.dart';
+import 'package:channel_biseo/features/ai/brain.dart';
+import 'package:channel_biseo/stages.dart';
+import 'package:channel_biseo/ui/produce_screen.dart';
+import 'package:flutter_test/flutter_test.dart';
+
+import 'helpers.dart';
+import 'package:channel_biseo/features/runner/notifier.dart';
+import 'package:channel_biseo/features/voice/voice_io.dart';
+
+/// 버전 1.1.0 코드로 실제 사용자 자료 폴더를 만든다 (업데이트 시험용).
+void main() {
+  test('make v1.1.0 fixture', () async {
+    registerStages();
+    final out = Directory(Platform.environment['OUT']!)..createSync(recursive: true);
+    final base = Directory('${out.path}/support')..createSync();
+    final docs = Directory('${out.path}/documents')..createSync();
+    final secrets = MemorySecretStore();
+    final env = AppEnv(
+      baseDir: base.path,
+      documentsDir: docs.path,
+      secrets: secrets,
+      httpClient: noNetwork(),
+      logger: AppLogger(),
+      speech: FakeSpeechInput(const []),
+      speaker: FakeSpeaker(),
+      notifier: MemoryNotifier(),
+      isDesktop: true,
+      platformName: 'test',
+      appVersion: '1.1.0+6',
+      launchUrl: (u) async => true,
+      now: () => DateTime(2026, 10, 20, 9),
+    );
+    final u = await UserContext.open(env, env.accounts.create('김사장', '1234'));
+    for (final pl in AppState.plugins) {
+      await pl(u);
+    }
+    final s = u.settings;
+    s.onboardingDone = true;
+    s.textScale = 1.5;
+    s.themeMode = 'dark';
+    s.reduceMotion = true;
+    s.haptics = false;
+    await u.youtube.connectGoogle();
+    for (final c in u.youtube.channels()) {
+      await u.youtube.syncChannel(c.channelId);
+    }
+    await u.edits.apply(await u.edits.plan('UC_mock_cook'));
+    final ps = productionOf(u);
+    await ps.create(channelId: 'UC_mock_cook', format: ContentFormat.shorts, topic: '김치찌개 끓이기');
+    u.memos.add('강릉 커피거리 영상');
+    await u.ai.setKey('sk-ant-fixture-key');
+    u.close();
+    env.accounts.db.close();
+    File('${out.path}/secrets.json').writeAsStringSync(const JsonEncoder.withIndent(' ').convert(secrets.data));
+  });
+}

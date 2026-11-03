@@ -1,0 +1,334 @@
+[
+ {
+  "title": "유튜브 썸네일 문구 아이디어",
+  "create_time": 1791025200.0,
+  "update_time": 1791025320.0,
+  "mapping": {
+   "root": {
+    "id": "root",
+    "message": null,
+    "parent": null,
+    "children": [
+     "sys"
+    ]
+   },
+   "sys": {
+    "id": "sys",
+    "parent": "root",
+    "children": [
+     "6720a1b2-0001-8000-9000-00000000aa01-n0"
+    ],
+    "message": {
+     "id": "sys",
+     "author": {
+      "role": "system"
+     },
+     "create_time": null,
+     "content": {
+      "content_type": "text",
+      "parts": [
+       ""
+      ]
+     },
+     "metadata": {
+      "is_visually_hidden_from_conversation": true
+     }
+    }
+   },
+   "6720a1b2-0001-8000-9000-00000000aa01-n0": {
+    "id": "6720a1b2-0001-8000-9000-00000000aa01-n0",
+    "parent": "sys",
+    "children": [
+     "6720a1b2-0001-8000-9000-00000000aa01-old",
+     "6720a1b2-0001-8000-9000-00000000aa01-n1"
+    ],
+    "message": {
+     "id": "6720a1b2-0001-8000-9000-00000000aa01-n0",
+     "author": {
+      "role": "user"
+     },
+     "create_time": 1791025200.0,
+     "content": {
+      "content_type": "text",
+      "parts": [
+       "유튜브 앱 소개 영상 썸네일 문구를 5개 추천해 줘"
+      ]
+     },
+     "metadata": {}
+    }
+   },
+   "6720a1b2-0001-8000-9000-00000000aa01-n1": {
+    "id": "6720a1b2-0001-8000-9000-00000000aa01-n1",
+    "parent": "6720a1b2-0001-8000-9000-00000000aa01-n0",
+    "children": [
+     "6720a1b2-0001-8000-9000-00000000aa01-n2"
+    ],
+    "message": {
+     "id": "6720a1b2-0001-8000-9000-00000000aa01-n1",
+     "author": {
+      "role": "assistant"
+     },
+     "create_time": 1791025230.0,
+     "content": {
+      "content_type": "text",
+      "parts": [
+       "1. 영상 정리, 이제 앱 하나로\n2. 구독 채널 새 영상 한눈에\n3. 10초 요약으로 시간 절약\n4. 놓친 영상 없이\n5. 나만의 유튜브 비서"
+      ]
+     },
+     "metadata": {}
+    }
+   },
+   "6720a1b2-0001-8000-9000-00000000aa01-n2": {
+    "id": "6720a1b2-0001-8000-9000-00000000aa01-n2",
+    "parent": "6720a1b2-0001-8000-9000-00000000aa01-n1",
+    "children": [
+     "6720a1b2-0001-8000-9000-00000000aa01-n3"
+    ],
+    "message": {
+     "id": "6720a1b2-0001-8000-9000-00000000aa01-n2",
+     "author": {
+      "role": "user"
+     },
+     "create_time": 1791025260.0,
+     "content": {
+      "content_type": "text",
+      "parts": [
+       "2번으로 하기로 했어. 글자 색은 노랑으로 할게."
+      ]
+     },
+     "metadata": {}
+    }
+   },
+   "6720a1b2-0001-8000-9000-00000000aa01-n3": {
+    "id": "6720a1b2-0001-8000-9000-00000000aa01-n3",
+    "parent": "6720a1b2-0001-8000-9000-00000000aa01-n2",
+    "children": [],
+    "message": {
+     "id": "6720a1b2-0001-8000-9000-00000000aa01-n3",
+     "author": {
+      "role": "assistant"
+     },
+     "create_time": 1791025290.0,
+     "content": {
+      "content_type": "text",
+      "parts": [
+       "좋아요. 썸네일 문구는 '구독 채널 새 영상 한눈에', 글자 색은 노랑으로 정했어요."
+      ]
+     },
+     "metadata": {}
+    }
+   },
+   "6720a1b2-0001-8000-9000-00000000aa01-old": {
+    "id": "6720a1b2-0001-8000-9000-00000000aa01-old",
+    "parent": "6720a1b2-0001-8000-9000-00000000aa01-n0",
+    "children": [],
+    "message": {
+     "id": "6720a1b2-0001-8000-9000-00000000aa01-old",
+     "author": {
+      "role": "assistant"
+     },
+     "create_time": 1791025200.0,
+     "content": {
+      "content_type": "text",
+      "parts": [
+       "이 답변은 다시 생성되어 버려진 답변입니다"
+      ]
+     },
+     "metadata": {}
+    }
+   }
+  },
+  "current_node": "6720a1b2-0001-8000-9000-00000000aa01-n3",
+  "conversation_id": "6720a1b2-0001-8000-9000-00000000aa01",
+  "id": "6720a1b2-0001-8000-9000-00000000aa01",
+  "default_model_slug": "gpt-sample",
+  "is_archived": false
+ },
+ {
+  "title": "엑셀 가계부 만들기",
+  "create_time": 1786684800.0,
+  "update_time": 1786684860.0,
+  "mapping": {
+   "root": {
+    "id": "root",
+    "message": null,
+    "parent": null,
+    "children": [
+     "sys"
+    ]
+   },
+   "sys": {
+    "id": "sys",
+    "parent": "root",
+    "children": [
+     "6720a1b2-0002-8000-9000-00000000aa02-n0"
+    ],
+    "message": {
+     "id": "sys",
+     "author": {
+      "role": "system"
+     },
+     "create_time": null,
+     "content": {
+      "content_type": "text",
+      "parts": [
+       ""
+      ]
+     },
+     "metadata": {
+      "is_visually_hidden_from_conversation": true
+     }
+    }
+   },
+   "6720a1b2-0002-8000-9000-00000000aa02-n0": {
+    "id": "6720a1b2-0002-8000-9000-00000000aa02-n0",
+    "parent": "sys",
+    "children": [
+     "6720a1b2-0002-8000-9000-00000000aa02-n1"
+    ],
+    "message": {
+     "id": "6720a1b2-0002-8000-9000-00000000aa02-n0",
+     "author": {
+      "role": "user"
+     },
+     "create_time": 1786684800.0,
+     "content": {
+      "content_type": "text",
+      "parts": [
+       "엑셀로 월별 가계부를 만들고 싶어"
+      ]
+     },
+     "metadata": {}
+    }
+   },
+   "6720a1b2-0002-8000-9000-00000000aa02-n1": {
+    "id": "6720a1b2-0002-8000-9000-00000000aa02-n1",
+    "parent": "6720a1b2-0002-8000-9000-00000000aa02-n0",
+    "children": [],
+    "message": {
+     "id": "6720a1b2-0002-8000-9000-00000000aa02-n1",
+     "author": {
+      "role": "assistant"
+     },
+     "create_time": 1786684830.0,
+     "content": {
+      "content_type": "text",
+      "parts": [
+       "날짜, 항목, 금액, 분류 열을 만들고 피벗 표로 월별 합계를 보세요."
+      ]
+     },
+     "metadata": {}
+    }
+   }
+  },
+  "current_node": "6720a1b2-0002-8000-9000-00000000aa02-n1",
+  "conversation_id": "6720a1b2-0002-8000-9000-00000000aa02",
+  "id": "6720a1b2-0002-8000-9000-00000000aa02",
+  "default_model_slug": "gpt-sample",
+  "is_archived": false
+ },
+ {
+  "title": "분할 매수 원칙 정리",
+  "create_time": 1792915200.0,
+  "update_time": 1792915290.0,
+  "mapping": {
+   "root": {
+    "id": "root",
+    "message": null,
+    "parent": null,
+    "children": [
+     "sys"
+    ]
+   },
+   "sys": {
+    "id": "sys",
+    "parent": "root",
+    "children": [
+     "6720a1b2-0003-8000-9000-00000000aa03-n0"
+    ],
+    "message": {
+     "id": "sys",
+     "author": {
+      "role": "system"
+     },
+     "create_time": null,
+     "content": {
+      "content_type": "text",
+      "parts": [
+       ""
+      ]
+     },
+     "metadata": {
+      "is_visually_hidden_from_conversation": true
+     }
+    }
+   },
+   "6720a1b2-0003-8000-9000-00000000aa03-n0": {
+    "id": "6720a1b2-0003-8000-9000-00000000aa03-n0",
+    "parent": "sys",
+    "children": [
+     "6720a1b2-0003-8000-9000-00000000aa03-n1"
+    ],
+    "message": {
+     "id": "6720a1b2-0003-8000-9000-00000000aa03-n0",
+     "author": {
+      "role": "user"
+     },
+     "create_time": 1792915200.0,
+     "content": {
+      "content_type": "text",
+      "parts": [
+       "주식 분할 매수할 때 지켜야 할 원칙을 정리해 줘"
+      ]
+     },
+     "metadata": {}
+    }
+   },
+   "6720a1b2-0003-8000-9000-00000000aa03-n1": {
+    "id": "6720a1b2-0003-8000-9000-00000000aa03-n1",
+    "parent": "6720a1b2-0003-8000-9000-00000000aa03-n0",
+    "children": [
+     "6720a1b2-0003-8000-9000-00000000aa03-n2"
+    ],
+    "message": {
+     "id": "6720a1b2-0003-8000-9000-00000000aa03-n1",
+     "author": {
+      "role": "assistant"
+     },
+     "create_time": 1792915230.0,
+     "content": {
+      "content_type": "text",
+      "parts": [
+       "1. 매수 금액을 일곱 번으로 나눈다\n2. 정한 하락 폭마다 한 번씩 산다\n3. 각 회차마다 목표 수익률에서 판다\n4. 감정이 아니라 원칙으로 움직인다"
+      ]
+     },
+     "metadata": {}
+    }
+   },
+   "6720a1b2-0003-8000-9000-00000000aa03-n2": {
+    "id": "6720a1b2-0003-8000-9000-00000000aa03-n2",
+    "parent": "6720a1b2-0003-8000-9000-00000000aa03-n1",
+    "children": [],
+    "message": {
+     "id": "6720a1b2-0003-8000-9000-00000000aa03-n2",
+     "author": {
+      "role": "user"
+     },
+     "create_time": 1792915260.0,
+     "content": {
+      "content_type": "text",
+      "parts": [
+       "하락 폭은 3%마다 한 번씩 사는 걸로 정했어"
+      ]
+     },
+     "metadata": {}
+    }
+   }
+  },
+  "current_node": "6720a1b2-0003-8000-9000-00000000aa03-n2",
+  "conversation_id": "6720a1b2-0003-8000-9000-00000000aa03",
+  "id": "6720a1b2-0003-8000-9000-00000000aa03",
+  "default_model_slug": "gpt-sample",
+  "is_archived": false
+ }
+]

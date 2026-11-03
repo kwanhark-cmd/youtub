@@ -1,0 +1,16 @@
+[project]
+name = "hdbiseo"
+version = "1.0.0"
+description = "컴퓨터 하드 자료 검색 정리 비서 - 분석 엔진"
+requires-python = ">=3.11"
+
+[tool.ruff]
+line-length = 170
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B"]
+ignore = ["B008"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

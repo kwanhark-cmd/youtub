@@ -1,0 +1,208 @@
+name: 개인비서 검사와 빌드
+
+on:
+  push:
+    branches: [main, 'claude/**']
+    tags: ['v*']
+    paths-ignore: ['0*_**', 'docs/**', '*.md']
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      release:
+        description: 'Releases 에 새 버전 올리기 (apps/assistant/pubspec.yaml 버전으로 태그)'
+        type: boolean
+        default: false
+
+env:
+  FLUTTER_VERSION: '3.47.9'
+  LINUX_DEPS: libgtk-3-dev ninja-build clang cmake pkg-config liblzma-dev libsqlite3-dev libavformat-dev libavcodec-dev libavutil-dev libswscale-dev libsecret-1-dev
+
+jobs:
+  test:
+    name: 검사·테스트 (다섯 모듈 + 공통 + 본체)
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+      - run: sudo apt-get update && sudo apt-get install -y $LINUX_DEPS
+      - run: flutter pub get
+      - name: 코드 검사 (공통·본체)
+        run: |
+          (cd packages/core && flutter analyze)
+          (cd apps/assistant && flutter analyze)
+      - name: 공통 테스트
+        working-directory: packages/core
+        run: flutter test
+      - name: 본체 테스트 (통합 흐름·가져오기·금고 호환)
+        working-directory: apps/assistant
+        run: flutter test
+      - name: 채널 모듈 기존 테스트
+        working-directory: packages/channel
+        run: flutter test
+      - name: 대화 모듈 기존 테스트
+        working-directory: packages/chats
+        run: flutter test
+      - name: 비우기 모듈 기존 테스트
+        working-directory: packages/declutter
+        run: flutter test
+      - name: 금고 모듈 기존 테스트 (호환 테스트 포함)
+        working-directory: packages/vault
+        run: flutter test
+
+  engine-test:
+    name: 하드 엔진 테스트
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: modules_src/harddisk/engine
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install -r requirements-dev.txt
+      - run: python -m pytest -q
+        env:
+          PYTHONIOENCODING: utf-8
+
+  linux:
+    name: 리눅스
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+      - run: sudo apt-get update && sudo apt-get install -y $LINUX_DEPS
+      - run: flutter pub get
+      - working-directory: apps/assistant
+        run: flutter build linux --release
+      - run: tar -czf gaein-biseo-linux.tar.gz -C apps/assistant/build/linux/x64/release bundle
+      - uses: actions/upload-artifact@v4
+        with:
+          name: linux
+          path: gaein-biseo-linux.tar.gz
+
+  android:
+    name: 안드로이드
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+      - name: 서명 열쇠 (GitHub Secrets 가 있을 때만)
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          if [ -n "$KEYSTORE_BASE64" ]; then
+            echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/release.jks"
+            echo "ANDROID_KEYSTORE_PATH=$RUNNER_TEMP/release.jks" >> "$GITHUB_ENV"
+          else
+            echo "::warning::ANDROID_KEYSTORE_BASE64 가 없어 시험용 열쇠로 서명합니다 (다음 버전 덮어쓰기 설치가 안 될 수 있어요)."
+          fi
+      - run: flutter pub get
+      - working-directory: apps/assistant
+        env:
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: flutter build apk --release
+      - run: cp apps/assistant/build/app/outputs/flutter-apk/app-release.apk gaein-biseo-android.apk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: android
+          path: gaein-biseo-android.apk
+
+  windows:
+    name: 윈도우
+    runs-on: windows-latest
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - working-directory: apps/assistant
+        run: flutter build windows --release
+      - shell: pwsh
+        run: Compress-Archive -Path apps/assistant/build/windows/x64/runner/Release/* -DestinationPath gaein-biseo-windows.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows
+          path: gaein-biseo-windows.zip
+
+  macos:
+    name: 맥
+    runs-on: macos-latest
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - working-directory: apps/assistant
+        run: flutter build macos --release
+      - run: cd apps/assistant/build/macos/Build/Products/Release && ditto -c -k --keepParent *.app "$GITHUB_WORKSPACE/gaein-biseo-macos.zip"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: macos
+          path: gaein-biseo-macos.zip
+
+  release:
+    name: Releases 에 올리기
+    needs: [test, linux, android, windows, macos]
+    if: startsWith(github.ref, 'refs/tags/v') || (github.event_name == 'workflow_dispatch' && inputs.release)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: 버전
+        run: |
+          V=$(grep -E '^version:' apps/assistant/pubspec.yaml | sed -E 's/version:\s*([0-9.]+).*/\1/')
+          echo "V=$V" >> $GITHUB_ENV
+          echo "TAG=v$V" >> $GITHUB_ENV
+      - uses: actions/download-artifact@v4
+        with:
+          path: out
+          merge-multiple: true
+      - name: 변경 내역 + 해시
+        run: |
+          awk -v v="## $V" '$0==v{f=1;next} /^## /{f=0} f' CHANGELOG.md > notes.md
+          printf "\n**설치**: 받은 파일로 덮어쓰기 설치하면 내 자료는 그대로예요. 앱 설정 → 업데이트 확인으로도 찾을 수 있어요.\n\n**SHA256** (앱이 내려받은 파일을 이 값으로 확인해요)\n\`\`\`\n" >> notes.md
+          (cd out && sha256sum *) >> notes.md
+          printf '```\n' >> notes.md
+          cat notes.md
+      - name: 올리기
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" out/* --clobber
+            gh release edit "$TAG" --notes-file notes.md
+          else
+            gh release create "$TAG" out/* --title "개인비서 $V" --notes-file notes.md --target "$GITHUB_SHA"
+          fi

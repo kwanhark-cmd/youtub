@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="ko" data-font="1" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1d4ed8">
+<title>하드 자료 찾기 비서</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="assets/mascot/hello-256.png" type="image/png">
+<link rel="stylesheet" href="theme.css">
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<header class="topbar">
+  <button class="btn btn-ghost navbtn" id="nav-back" type="button" aria-label="뒤로 가기">← <span class="lbl">뒤로</span></button>
+  <h1 id="page-title">하드 자료 찾기 비서</h1>
+  <a class="btn btn-ghost navbtn" id="nav-home" href="#/" aria-label="홈으로">🏠 <span class="lbl">홈</span></a>
+</header>
+<main id="view" tabindex="-1"></main>
+<div class="toast-wrap" id="toasts" role="status" aria-live="polite"></div>
+<div id="modal-root"></div>
+<noscript><p style="padding:20px">이 화면은 자바스크립트가 켜져 있어야 보여요.</p></noscript>
+<script src="js/core.js"></script>
+<script src="js/voice.js"></script>
+<script src="js/screens-main.js"></script>
+<script src="js/screens-media.js"></script>
+<script src="js/screens-more.js"></script>
+<script src="js/screens-settings.js"></script>
+<script>App.boot();</script>
+</body>
+</html>

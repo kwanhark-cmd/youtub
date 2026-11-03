@@ -1,0 +1,7 @@
+{
+  "appId": "kr.hdbiseo.viewer",
+  "appName": "하드 비서",
+  "webDir": "../web",
+  "server": { "androidScheme": "http", "cleartext": true },
+  "android": { "allowMixedContent": true }
+}

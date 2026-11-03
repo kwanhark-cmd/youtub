@@ -1,0 +1,60 @@
+name: binugi
+description: "집안 물건 비우기 판매 폐기 비서"
+publish_to: 'none'
+version: 1.1.0+2
+
+resolution: workspace
+environment:
+  sdk: ^3.13.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  provider: 6.1.5+1
+  sqflite: 2.4.5
+  sqflite_common: 2.5.14
+  sqflite_common_ffi: 2.4.5
+  path_provider: 2.1.6
+  path: 1.9.1
+  image_picker: 1.2.4
+  file_selector: 1.1.0
+  speech_to_text: 7.5.0
+  flutter_tts: 4.2.5
+  flutter_local_notifications: 22.3.3
+  timezone: 0.11.2
+  flutter_timezone: 5.1.1
+  receive_sharing_intent: 1.9.0
+  archive: 4.6.0
+  cryptography: 2.9.0
+  http: 1.6.0
+  flutter_svg: 2.3.2
+  image: 4.12.0
+  intl: 0.20.3
+  package_info_plus: 10.2.2
+  uuid: 4.6.0
+  fc_native_video_thumbnail: 4.0.0
+  flutter_secure_storage: 11.2.0
+  window_manager: 0.5.1
+  url_launcher: 6.3.3
+  open_filex: 5.0.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: 6.0.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/emoji/
+    - assets/mascot/
+    - assets/licenses/
+    - assets/app_icons/
+  fonts:
+    - family: NotoSansKR
+      fonts:
+        - asset: assets/fonts/NotoSansKR-Regular.ttf
+        - asset: assets/fonts/NotoSansKR-Bold.ttf
+          weight: 700

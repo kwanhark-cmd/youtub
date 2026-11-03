@@ -1,0 +1,19 @@
+name: assistant_core
+description: 개인비서 공통 기능 (로그인·테마·음성 라우터·설정·로그·업데이트·모듈 연결 규격)
+publish_to: none
+version: 1.0.0
+resolution: workspace
+environment:
+  sdk: ^3.13.0
+dependencies:
+  flutter:
+    sdk: flutter
+  path: 1.9.1
+  path_provider: 2.1.6
+  crypto: 3.0.8
+  http: 1.6.0
+  flutter_secure_storage: 11.2.0
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: 6.0.0

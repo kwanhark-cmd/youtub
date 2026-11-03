@@ -1,0 +1,12 @@
+name: personal_assistant_workspace
+description: 개인비서 통합 앱 모노레포 (pub workspace)
+publish_to: none
+environment:
+  sdk: ^3.13.0
+workspace:
+  - packages/core
+  - packages/channel
+  - packages/chats
+  - packages/declutter
+  - packages/vault
+  - apps/assistant

@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-label="비서 마스코트"><defs>
+<radialGradient id="b" cx="35%" cy="28%" r="80%"><stop offset="0" stop-color="#8fd3ff"/><stop offset=".55" stop-color="#3b82f6"/><stop offset="1" stop-color="#1e40af"/></radialGradient>
+<radialGradient id="s" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#000" stop-opacity=".28"/><stop offset="1" stop-color="#000" stop-opacity="0"/></radialGradient>
+<linearGradient id="h" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".75"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
+</defs><ellipse cx="100" cy="186" rx="58" ry="9" fill="url(#s)"/>
+<rect x="34" y="30" width="132" height="140" rx="46" fill="url(#b)"/>
+<rect x="52" y="40" width="80" height="34" rx="17" fill="url(#h)"/>
+<circle cx="70" cy="128" r="9" fill="#fda4af" opacity=".8"/><circle cx="130" cy="128" r="9" fill="#fda4af" opacity=".8"/><circle cx="78" cy="104" r="11" fill="#0f172a"/><circle cx="122" cy="104" r="11" fill="#0f172a"/><circle cx="82" cy="100" r="4" fill="#fff"/><circle cx="126" cy="100" r="4" fill="#fff"/><path d="M88 136 Q100 140 112 136" stroke="#0f172a" stroke-width="6" fill="none" stroke-linecap="round"/><circle cx="150" cy="140" r="22" fill="#e0f2fe" stroke="#f59e0b" stroke-width="9"/><rect x="164" y="156" width="12" height="32" rx="6" transform="rotate(-40 170 170)" fill="#f59e0b"/></svg>

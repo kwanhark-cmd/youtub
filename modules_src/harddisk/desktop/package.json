@@ -1,0 +1,34 @@
+{
+  "name": "hdbiseo-desktop",
+  "productName": "하드 자료 찾기 비서",
+  "version": "1.1.0",
+  "description": "컴퓨터 하드 자료 검색 정리 비서 - 보기 화면(윈도우·맥)",
+  "main": "main.js",
+  "license": "UNLICENSED",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "dist:win": "electron-builder --win nsis",
+    "dist:mac": "electron-builder --mac dmg",
+    "android:init": "npx cap add android",
+    "android:sync": "npx cap sync android"
+  },
+  "devDependencies": {
+    "electron": "33.2.1",
+    "electron-builder": "25.1.8",
+    "@capacitor/cli": "6.2.0"
+  },
+  "dependencies": {
+    "@capacitor/core": "6.2.0",
+    "@capacitor/android": "6.2.0"
+  },
+  "build": {
+    "appId": "kr.hdbiseo.desktop",
+    "productName": "하드 자료 찾기 비서",
+    "files": ["main.js", "offline.html"],
+    "extraResources": [{ "from": "../dist/HDBiseo", "to": "engine", "filter": ["**/*"] }],
+    "win": { "target": "nsis" },
+    "mac": { "target": "dmg", "category": "public.app-category.productivity" },
+    "nsis": { "oneClick": false, "allowToChangeInstallationDirectory": true, "shortcutName": "하드 자료 찾기 비서" }
+  }
+}

@@ -1,0 +1,202 @@
+name: 검사와 빌드
+
+on:
+  push:
+    branches: ["main", "claude/**"]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      release:
+        description: "Releases에 새 버전 올리기(프로그램 버전으로 태그 자동 생성)"
+        type: boolean
+        default: false
+
+jobs:
+  engine-test:
+    name: 엔진 테스트 (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        working-directory: engine
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements-dev.txt
+      - run: ruff check hdbiseo tests
+      - name: 실제 얼굴 모델 시험 준비(리눅스만)
+        if: runner.os == 'Linux'
+        run: |
+          mkdir -p /tmp/models && cd /tmp/models
+          curl -sSLO https://media.githubusercontent.com/media/opencv/opencv_zoo/main/models/face_detection_yunet/face_detection_yunet_2023mar.onnx
+          curl -sSLO https://media.githubusercontent.com/media/opencv/opencv_zoo/main/models/face_recognition_sface/face_recognition_sface_2021dec.onnx
+          curl -sSL -o /tmp/face.jpg https://raw.githubusercontent.com/opencv/opencv/4.x/samples/data/lena.jpg
+          echo "HDBISEO_TEST_MODELS=/tmp/models" >> $GITHUB_ENV
+          echo "HDBISEO_TEST_FACE=/tmp/face.jpg" >> $GITHUB_ENV
+      - run: python -m pytest -q -rs
+        env:
+          PYTHONIOENCODING: utf-8
+
+  ui-test:
+    name: 화면 테스트(흐름·디자인)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - run: sudo apt-get update && sudo apt-get install -y ffmpeg fonts-noto-cjk
+      - run: pip install -r engine/requirements.txt
+      - run: npm install --no-save playwright@1.49.1 && npx playwright install --with-deps chromium
+      - run: node web/tests/ui-test.js
+
+  windows-installer:
+    name: 윈도우 설치 프로그램
+    needs: engine-test
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r engine/requirements.txt pyinstaller==6.11.1
+      - name: 분석 엔진 실행 파일 만들기
+        working-directory: engine
+        run: pyinstaller --noconfirm --windowed --name HDBiseo --icon ../web/assets/mascot/hello.ico --add-data "../web;web" --collect-submodules hdbiseo --collect-submodules uvicorn --hidden-import pystray._win32 --distpath ../dist launcher.py
+      - name: ffmpeg 넣기(영상 썸네일용)
+        shell: pwsh
+        run: |
+          choco install ffmpeg -y --no-progress
+          New-Item -ItemType Directory -Force dist/HDBiseo/bin | Out-Null
+          $ff = (Get-Command ffmpeg).Source; $fp = (Get-Command ffprobe).Source
+          Copy-Item (Resolve-Path $ff) dist/HDBiseo/bin/ffmpeg.exe -ErrorAction SilentlyContinue
+          Copy-Item (Resolve-Path $fp) dist/HDBiseo/bin/ffprobe.exe -ErrorAction SilentlyContinue
+      - name: 진단(콘솔판으로 시작 과정 기록)
+        continue-on-error: true
+        working-directory: engine
+        shell: pwsh
+        run: |
+          pyinstaller --noconfirm --console --debug=bootloader --name HDBiseoDiag --add-data "../web;web" --collect-submodules hdbiseo --collect-submodules uvicorn --hidden-import pystray._win32 --distpath ../diag launcher.py | Out-Null
+          $env:HDBISEO_HOME = "$env:RUNNER_TEMP\diaghome"; $env:HDBISEO_DIAG = "1"; $env:HDBISEO_PORT = "47811"
+          $p = Start-Process ../diag/HDBiseoDiag/HDBiseoDiag.exe -ArgumentList "--no-browser" -PassThru -RedirectStandardOutput "$env:RUNNER_TEMP\o.txt" -RedirectStandardError "$env:RUNNER_TEMP\e.txt"
+          $ok = $false
+          for ($i = 0; $i -lt 60; $i++) { try { $r = Invoke-RestMethod http://127.0.0.1:47811/api/health -TimeoutSec 2; if ($r.ok) { $ok = $true; break } } catch {}; Start-Sleep 1 }
+          "진단판 시작 성공: $ok"
+          Stop-Process $p -Force -ErrorAction SilentlyContinue
+          Start-Sleep 1
+          "---- stderr(마지막 60줄) ----"; Get-Content "$env:RUNNER_TEMP\e.txt" -Tail 60 -ErrorAction SilentlyContinue
+          "---- stdout ----"; Get-Content "$env:RUNNER_TEMP\o.txt" -Tail 30 -ErrorAction SilentlyContinue
+          "---- crash.log ----"; Get-Content "$env:RUNNER_TEMP\diaghome\logs\crash.log" -ErrorAction SilentlyContinue
+      - name: 실행 파일이 켜지는지 확인
+        shell: pwsh
+        run: |
+          $env:HDBISEO_HOME = "$env:RUNNER_TEMP\hdhome"
+          $env:HDBISEO_DIAG = "1"
+          $p = Start-Process dist/HDBiseo/HDBiseo.exe -ArgumentList "--no-browser" -PassThru
+          $ok = $false
+          for ($i = 0; $i -lt 150; $i++) { try { $r = Invoke-RestMethod http://127.0.0.1:47810/api/health -TimeoutSec 2; if ($r.ok) { $ok = $true; break } } catch {}; Start-Sleep 1 }
+          if (-not $ok) { "프로세스 살아 있음: " + (-not $p.HasExited); if ($p.HasExited) { "종료 코드: " + $p.ExitCode } }
+          Stop-Process $p -Force -ErrorAction SilentlyContinue
+          if (-not $ok) { Get-ChildItem -Recurse $env:HDBISEO_HOME | Select-Object FullName; Get-Content "$env:HDBISEO_HOME\logs\engine.log" -ErrorAction SilentlyContinue; Get-Content "$env:HDBISEO_HOME\logs\crash.log" -ErrorAction SilentlyContinue; Get-Content "$env:LOCALAPPDATA\HDBiseo\logs\*.log" -ErrorAction SilentlyContinue; throw "엔진이 켜지지 않음" }
+      - name: 설치 프로그램 만들기(Inno Setup)
+        shell: pwsh
+        run: |
+          $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
+          if (-not (Test-Path $iscc)) { choco install innosetup -y --no-progress }
+          if (-not (Test-Path "${env:ProgramFiles(x86)}\Inno Setup 6\Languages\Korean.isl")) { (Get-Content installer.iss) -replace 'compiler:Languages\\Korean.isl','compiler:Default.isl' | Set-Content installer.iss }
+          & $iscc installer.iss
+      - uses: actions/upload-artifact@v4
+        with:
+          name: HDBiseo-Windows-Setup
+          path: dist/HDBiseo-Setup-*.exe
+
+  desktop-mac:
+    name: 맥 보기 앱(Electron)
+    runs-on: macos-latest
+    continue-on-error: true
+    defaults:
+      run:
+        working-directory: desktop
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - run: npm install
+      - run: mkdir -p ../dist/HDBiseo && npx electron-builder --mac dmg --publish never
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: "false"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: HDBiseo-Mac
+          path: desktop/dist/*.dmg
+
+  android:
+    name: 안드로이드 보기 앱(Capacitor)
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    defaults:
+      run:
+        working-directory: desktop
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - run: npm install
+      - run: npx cap add android && npx cap sync android
+      - name: 같은 와이파이의 PC(http) 접속 허용
+        run: sed -i 's/<application/<application android:usesCleartextTraffic="true"/' android/app/src/main/AndroidManifest.xml
+      - run: cd android && ./gradlew assembleDebug --no-daemon
+      - uses: actions/upload-artifact@v4
+        with:
+          name: HDBiseo-Android
+          path: desktop/android/app/build/outputs/apk/debug/*.apk
+
+  release:
+    name: 새 버전 올리기(Releases)
+    if: always() && needs.windows-installer.result == 'success' && (startsWith(github.ref, 'refs/tags/v') || (github.event_name == 'workflow_dispatch' && inputs.release))
+    needs: [windows-installer, desktop-mac, android, ui-test]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: 버전 확인(태그 = 프로그램 버전)
+        run: |
+          V=$(python3 -c "import re;print(re.search(r'VERSION = \"(.+?)\"', open('engine/hdbiseo/__init__.py').read()).group(1))")
+          if [ "$GITHUB_REF_TYPE" = "tag" ]; then test "v$V" = "${GITHUB_REF_NAME}" || (echo "태그(${GITHUB_REF_NAME})와 버전(v$V)이 달라요" && exit 1); fi
+          echo "V=$V" >> $GITHUB_ENV
+          echo "TAG=v$V" >> $GITHUB_ENV
+      - uses: actions/download-artifact@v4
+        with:
+          path: art
+      - name: 파일 이름 정리
+        run: |
+          mkdir -p out
+          cp art/HDBiseo-Windows-Setup/*.exe out/
+          for f in art/HDBiseo-Mac/*.dmg; do [ -f "$f" ] && cp "$f" "out/HDBiseo-$V-mac.dmg"; done
+          for f in art/HDBiseo-Android/*.apk; do [ -f "$f" ] && cp "$f" "out/HDBiseo-$V-android.apk"; done
+          ls -la out
+      - name: 변경 내역(한국어) 꺼내기
+        run: |
+          awk -v v="## $V" '$0==v{f=1;next} /^## /{f=0} f' CHANGELOG.md > notes.md
+          printf "\n\n**설치 방법**: 윈도우는 HDBiseo-Setup 파일을 받아 실행(덮어쓰기 설치, 색인·설정은 그대로). 프로그램 안 설정 > 업데이트 확인으로도 설치돼요.\n" >> notes.md
+          cat notes.md
+      - name: Releases에 올리기
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$TAG" out/* --target "$GITHUB_SHA" --title "하드 자료 찾기 비서 $V" --notes-file notes.md
