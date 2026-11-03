@@ -3,19 +3,37 @@
 import 'dart:io';
 
 import 'package:flutter/widgets.dart';
+import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
 import 'package:sqflite/sqflite.dart' as sqflite;
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 import 'app.dart';
+import 'core/clock.dart';
 import 'services/media_picker.dart';
 import 'services/notification_service.dart';
+import 'services/secret_store.dart';
 import 'services/voice_service.dart';
 import 'state/app_state.dart';
 
-Future<AppState> openDeclutterState({Directory? rootOverride}) async {
+int _memN = 0;
+
+/// [inMemory]: 시험용. 메모리 DB(격리 없이)와 조용한 음성·알림을 쓴다.
+/// 나머지 인자는 시험에서 가짜를 넣을 때만 쓴다(기본은 단독 앱과 같음).
+Future<AppState> openDeclutterState({
+  Directory? rootOverride,
+  bool inMemory = false,
+  Clock? clock,
+  VoiceIO? voice,
+  Notifier? notifier,
+  SecretStore? secretStore,
+  http.Client? httpClient,
+}) async {
   final DatabaseFactory factory;
-  if (Platform.isWindows || Platform.isLinux) {
+  if (inMemory) {
+    sqfliteFfiInit();
+    factory = databaseFactoryFfiNoIsolate;
+  } else if (Platform.isWindows || Platform.isLinux) {
     sqfliteFfiInit();
     factory = databaseFactoryFfi;
   } else {
@@ -23,7 +41,16 @@ Future<AppState> openDeclutterState({Directory? rootOverride}) async {
   }
   final root = rootOverride ?? Directory('${(await getApplicationSupportDirectory()).path}${Platform.pathSeparator}binugi');
   await root.create(recursive: true);
-  return AppState.open(dbFactory: factory, root: root, voice: DeviceVoice(), notifier: DeviceNotifier());
+  return AppState.open(
+    dbFactory: factory,
+    root: root,
+    dbPath: inMemory ? 'file:assistant_mem${_memN++}_${DateTime.now().microsecondsSinceEpoch}?mode=memory&cache=shared' : null,
+    clock: clock ?? const SystemClock(),
+    voice: voice ?? (inMemory ? SilentVoice() : DeviceVoice()),
+    notifier: notifier ?? (inMemory ? SilentNotifier() : DeviceNotifier()),
+    secretStore: secretStore ?? (inMemory ? MemorySecretStore() : null),
+    httpClient: httpClient,
+  );
 }
 
 Widget declutterApp(AppState state) => BinugiApp(state: state, picker: DeviceMediaPicker());
