@@ -10,7 +10,8 @@ val hasReleaseKey = releaseKeystore != null && file(releaseKeystore).exists()
 
 android {
     namespace = "com.kwanhark.personal_assistant"
-    compileSdk = flutter.compileSdkVersion
+    // 웹뷰 등 일부 부품이 SDK 37 이상을 요구
+    compileSdk = maxOf(flutter.compileSdkVersion, 37)
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
