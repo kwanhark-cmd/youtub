@@ -1,11 +1,16 @@
 import 'package:assistant_core/assistant_core.dart';
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../app/assistant_state.dart';
 import '../modules/lazy.dart';
 import 'widgets.dart';
 
 /// 모듈의 기존 홈을 그대로 띄우고, 맨 위에 같은 자리의 "뒤로"·"개인비서 홈" 띠를 둔다.
+const kIsWebSafe = bool.fromEnvironment('dart.library.js_util');
+
 class ModuleHost extends StatefulWidget {
   const ModuleHost({super.key, required this.state, required this.module});
   final AssistantState state;
@@ -35,6 +40,15 @@ class _ModuleHostState extends State<ModuleHost> {
       CoreLog.info('${widget.module.id.title} 열기 ${sw.elapsedMilliseconds}ms');
       return w;
     });
+  }
+
+  @override
+  void dispose() {
+    // 금고에서 나오면 화면 캡처 막기를 풀어 다른 모듈은 평소대로 (안드로이드)
+    if (widget.module.id == ModuleId.vault && !kIsWebSafe && Platform.isAndroid) {
+      const MethodChannel('account_vault/secure_screen').invokeMethod<void>('setSecure', false).catchError((_) {});
+    }
+    super.dispose();
   }
 
   /// 모듈 안 화면이 쌓여 있으면 한 단계 뒤로, 아니면 개인비서 홈으로.

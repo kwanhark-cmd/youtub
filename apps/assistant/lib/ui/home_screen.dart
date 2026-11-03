@@ -4,6 +4,7 @@ import 'package:assistant_core/assistant_core.dart';
 import 'package:flutter/material.dart';
 
 import '../app/assistant_state.dart';
+import '../app/keys.dart';
 import 'module_host.dart';
 import 'search_screen.dart';
 import 'settings_screen.dart';
@@ -54,6 +55,17 @@ class _HomeScreenState extends State<HomeScreen> {
         status[m.id] = '눌러서 열기';
       }
     }));
+    // 구글 "테스트" 앱 연결은 7일마다 만료: 3일 전부터 알려 준다
+    try {
+      final left = await SharedKeys(s.secrets).googleDaysLeft();
+      if (left != null && left <= 3) {
+        (today[ModuleId.channel] ??= []).add(TodayItem(
+          module: ModuleId.channel,
+          text: left <= 0 ? '구글 연결이 끝났어요. 설정 → 연결 상태에서 다시 이어 주세요' : '구글 연결이 $left일 뒤 끝나요. 미리 다시 이어 주세요',
+          urgency: left <= 0 ? 98 : 85,
+        ));
+      }
+    } catch (_) {}
     for (final sug in s.links.pending) {
       (today[sug.to] ??= []).add(TodayItem(module: sug.to, text: '새 소재 제안: ${sug.title}', urgency: 40));
     }

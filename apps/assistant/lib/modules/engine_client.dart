@@ -44,6 +44,9 @@ class EngineClient {
     return token!;
   }
 
+  /// 얼굴·장면 모델 상태 ({"faces": true/false, ...})
+  Future<Map<String, dynamic>> recognition() => _get('/api/recognition');
+
   /// 홈 "오늘 할 일" 카드 (예: 오늘의 추억)
   Future<Map<String, dynamic>> today() => _get('/api/today');
 
@@ -59,6 +62,17 @@ class EngineClient {
       }
     }
     return out;
+  }
+
+  /// 개인 기록 타임라인에 글 기록 하나 추가 (엔진의 "음성 일기" 저장 경로를 그대로 사용). 하드 원본은 건드리지 않는다.
+  Future<int?> addRecord(String text) async {
+    final req = http.MultipartRequest('POST', _u('/api/records/voice-diary'))
+      ..headers.addAll({..._h}..remove('content-type'))
+      ..fields['text'] = text;
+    final r = await http.Response.fromStream(await _c.send(req).timeout(const Duration(seconds: 10)));
+    final j = jsonDecode(utf8.decode(r.bodyBytes));
+    if (r.statusCode >= 400) throw EngineError('${(j is Map ? j['error'] : null) ?? '엔진 응답 ${r.statusCode}'}');
+    return (j as Map)['id'] as int?;
   }
 
   /// 썸네일 주소 (채널 소재로 보낼 때)

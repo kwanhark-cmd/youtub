@@ -1,5 +1,3 @@
-import 'dart:typed_data';
-
 import 'package:flutter/services.dart';
 
 /// 모듈 코드가 `assets/...` 이름으로 그림·글을 부를 때, 패키지 안 그림(`packages/<이름>/assets/...`)을
