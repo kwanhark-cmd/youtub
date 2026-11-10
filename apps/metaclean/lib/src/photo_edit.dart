@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:image/image.dart' as img;
 
 import 'exif_utils.dart';
+import 'photo_xmp.dart';
 import 'strip.dart';
 
 /// 촬영 날짜 정보를 어떻게 할지.
@@ -57,6 +58,9 @@ PhotoEditResult? editPhotoMeta(
   DeviceAction device = DeviceAction.keep,
   String? make,
   String? model,
+  String? title,
+  String? description,
+  List<String> keywords = const [],
 }) {
   if (dateAction == DateAction.change && date == null) {
     throw ArgumentError('날짜를 바꾸려면 새 날짜가 필요합니다');
@@ -126,6 +130,11 @@ PhotoEditResult? editPhotoMeta(
     }
   }
 
+  // 정리·검색용 서술 메타데이터(제목·설명·키워드)를 한글까지 안전하게 XMP로 넣는다.
+  final xmp = buildPhotoXmp(
+      title: title, description: description, keywords: keywords);
+  Uint8List withXmp(Uint8List b) => xmp == null ? b : injectPhotoXmp(b, xmp);
+
   final isJpeg = src.length > 2 && src[0] == 0xFF && src[1] == 0xD8;
   if (isJpeg) {
     final base = stripMetadata(src, keepExif: true);
@@ -134,14 +143,14 @@ PhotoEditResult? editPhotoMeta(
     apply(exif);
     final out = img.injectJpgExif(base.bytes, exif);
     if (out == null) return null;
-    return PhotoEditResult(bytes: out, reEncoded: false);
+    return PhotoEditResult(bytes: withXmp(out), reEncoded: false);
   }
 
   final decoded = img.decodeImage(src);
   if (decoded == null) return null;
   apply(decoded.exif);
   return PhotoEditResult(
-    bytes: Uint8List.fromList(img.encodeJpg(decoded, quality: 95)),
+    bytes: withXmp(Uint8List.fromList(img.encodeJpg(decoded, quality: 95))),
     reEncoded: true,
   );
 }

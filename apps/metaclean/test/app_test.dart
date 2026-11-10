@@ -19,7 +19,8 @@ void main() {
     expect(find.text('촬영 기기 (스마트폰 제조사·기종)'), findsOneWidget);
     expect(find.text('그대로'), findsNWidgets(3));
     expect(find.text('지우기'), findsNWidgets(3));
-    expect(find.text('사진 고르고 수정하기 (여러 장 가능)'), findsOneWidget);
+    // 정리·검색용 설명 카드도 있다
+    expect(find.text('설명 (정리·검색용, 선택)'), findsOneWidget);
 
     // 날짜 '바꾸기'(첫 항목)를 누르면 날짜 고르기 줄이 나온다
     await tester.tap(find.text('바꾸기').first);

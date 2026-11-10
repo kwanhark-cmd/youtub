@@ -32,6 +32,9 @@ class _EditScreenState extends State<EditScreen> {
   final _locCtrl = TextEditingController();
   final _makeCtrl = TextEditingController();
   final _modelCtrl = TextEditingController();
+  final _titleCtrl = TextEditingController();
+  final _descCtrl = TextEditingController();
+  final _tagCtrl = TextEditingController();
 
   DeviceAction _device = DeviceAction.keep;
   DateAction _dateAction = DateAction.keep;
@@ -45,6 +48,9 @@ class _EditScreenState extends State<EditScreen> {
     _locCtrl.dispose();
     _makeCtrl.dispose();
     _modelCtrl.dispose();
+    _titleCtrl.dispose();
+    _descCtrl.dispose();
+    _tagCtrl.dispose();
     super.dispose();
   }
 
@@ -71,13 +77,25 @@ class _EditScreenState extends State<EditScreen> {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
   }
 
+  List<String> get _tags => _tagCtrl.text
+      .split(RegExp(r'[,\n]'))
+      .map((e) => e.trim())
+      .where((e) => e.isNotEmpty)
+      .toList();
+
+  bool get _hasDesc =>
+      _titleCtrl.text.trim().isNotEmpty ||
+      _descCtrl.text.trim().isNotEmpty ||
+      _tags.isNotEmpty;
+
   Future<void> _run() async {
     double? lat;
     double? lng;
     if (_dateAction == DateAction.keep &&
         _gps == GpsAction.keep &&
-        _device == DeviceAction.keep) {
-      _say('바꿀 항목을 하나 이상 골라 주세요 (날짜·위치·촬영 기기)');
+        _device == DeviceAction.keep &&
+        !_hasDesc) {
+      _say('바꿀 항목을 하나 이상 골라 주세요 (날짜·위치·기기·설명)');
       return;
     }
     if (_device == DeviceAction.change &&
@@ -117,6 +135,9 @@ class _EditScreenState extends State<EditScreen> {
           device: _device,
           make: _makeCtrl.text,
           model: _modelCtrl.text,
+          title: _titleCtrl.text,
+          description: _descCtrl.text,
+          keywords: _tags,
         );
         if (r == null) {
           item.error = '지원하지 않는 사진 형식';
@@ -311,6 +332,52 @@ class _EditScreenState extends State<EditScreen> {
                     style: TextStyle(fontSize: 12),
                   ),
                 ],
+              ],
+            ),
+          ),
+        ),
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('설명 (정리·검색용, 선택)',
+                    style: TextStyle(fontSize: 16)),
+                const SizedBox(height: 4),
+                const Text(
+                  '나중에 사진을 찾기 쉽도록 제목·설명·태그를 적어 둘 수 있어요. '
+                  '한글도 안전하게 저장되고, 갤러리·사진 앱에서 검색에 쓰입니다.',
+                  style: TextStyle(fontSize: 12),
+                ),
+                const SizedBox(height: 10),
+                TextField(
+                  controller: _titleCtrl,
+                  decoration: const InputDecoration(
+                    labelText: '제목',
+                    hintText: '예: 할머니 칠순 기념사진',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: _descCtrl,
+                  maxLines: 2,
+                  decoration: const InputDecoration(
+                    labelText: '설명',
+                    hintText: '예: 1980년 부산에서 인화한 가족사진을 스캔',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: _tagCtrl,
+                  decoration: const InputDecoration(
+                    labelText: '태그 (쉼표로 구분)',
+                    hintText: '예: 가족, 1980, 부산, 필름사진',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
               ],
             ),
           ),
