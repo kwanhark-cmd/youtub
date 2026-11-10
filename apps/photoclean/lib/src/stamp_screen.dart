@@ -1,12 +1,12 @@
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:exif/exif.dart';
 import 'package:flutter/material.dart';
 import 'package:gal/gal.dart';
 import 'package:image/image.dart' as img;
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
-import 'package:native_exif/native_exif.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 
@@ -30,7 +30,8 @@ class _StampScreenState extends State<StampScreen> {
   final _lngCtrl = TextEditingController();
 
   XFile? _picked;
-  Map<String, Object>? _existing;
+  int _existingCount = 0;
+  String? _existingDate;
   DateTime _date = DateTime.now();
   bool _busy = false;
   String? _savedPath;
@@ -48,15 +49,18 @@ class _StampScreenState extends State<StampScreen> {
   Future<void> _pick() async {
     final f = await _picker.pickImage(source: ImageSource.gallery);
     if (f == null) return;
-    Map<String, Object>? attrs;
+    var count = 0;
+    String? dateStr;
     try {
-      final exif = await Exif.fromPath(f.path);
-      attrs = await exif.getAttributes();
-      await exif.close();
+      final tags = await readExifFromBytes(await f.readAsBytes());
+      count = tags.length;
+      dateStr = tags['EXIF DateTimeOriginal']?.printable ??
+          tags['Image DateTime']?.printable;
     } catch (_) {}
     setState(() {
       _picked = f;
-      _existing = attrs;
+      _existingCount = count;
+      _existingDate = dateStr;
       _savedPath = null;
       _date = DateTime.now();
     });
@@ -81,34 +85,29 @@ class _StampScreenState extends State<StampScreen> {
     if (picked == null || !_formKey.currentState!.validate()) return;
     setState(() => _busy = true);
     try {
-      // JPEG가 아니면 JPEG로 바꿔서 EXIF를 기록한다.
-      var bytes = await picked.readAsBytes();
-      final isJpeg = bytes.length > 2 && bytes[0] == 0xFF && bytes[1] == 0xD8;
-      if (!isJpeg) {
-        final decoded = img.decodeImage(bytes);
-        if (decoded == null) {
-          throw '지원하지 않는 사진 형식이에요';
-        }
-        bytes = Uint8List.fromList(img.encodeJpg(decoded, quality: 95));
+      final bytes = await picked.readAsBytes();
+      final decoded = img.decodeImage(bytes);
+      if (decoded == null) {
+        throw '지원하지 않는 사진 형식이에요';
       }
-      final dir = await getApplicationDocumentsDirectory();
-      final name = safeFileName(_itemCtrl.text);
-      final stampTag = DateFormat('yyyyMMdd_HHmmss').format(DateTime.now());
-      final outPath = '${dir.path}/기록_${name}_$stampTag.jpg';
-      await File(outPath).writeAsBytes(bytes, flush: true);
-
       final lat = double.tryParse(_latCtrl.text.trim());
       final lng = double.tryParse(_lngCtrl.text.trim());
-      final exif = await Exif.fromPath(outPath);
-      await exif.writeAttributes(buildStampAttributes(
+      applyStamp(
+        decoded,
         date: _date,
-        itemName: _itemCtrl.text.trim(),
+        itemName: _itemCtrl.text,
         memo: _memoCtrl.text,
         place: _placeCtrl.text,
         lat: lat,
         lng: lng,
-      ));
-      await exif.close();
+      );
+      final out = Uint8List.fromList(img.encodeJpg(decoded, quality: 95));
+
+      final dir = await getApplicationDocumentsDirectory();
+      final name = safeFileName(_itemCtrl.text);
+      final stampTag = DateFormat('yyyyMMdd_HHmmss').format(DateTime.now());
+      final outPath = '${dir.path}/기록_${name}_$stampTag.jpg';
+      await File(outPath).writeAsBytes(out, flush: true);
 
       try {
         await Gal.requestAccess();
@@ -133,7 +132,6 @@ class _StampScreenState extends State<StampScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final existing = _existing;
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Form(
@@ -161,10 +159,10 @@ class _StampScreenState extends State<StampScreen> {
               ),
               const SizedBox(height: 8),
               Text(
-                existing == null || existing.isEmpty
+                _existingCount == 0
                     ? '현재 메타데이터: 없음 (판매자가 지우고 보냈어요)'
-                    : '현재 메타데이터: ${existing.length}개'
-                        '${existing['DateTimeOriginal'] != null ? " · 촬영일 ${existing['DateTimeOriginal']}" : ""}',
+                    : '현재 메타데이터: $_existingCount개'
+                        '${_existingDate != null ? " · 촬영일 $_existingDate" : ""}',
                 style: TextStyle(color: Theme.of(context).colorScheme.primary),
               ),
               const SizedBox(height: 12),

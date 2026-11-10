@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:image/image.dart' as img;
 import 'package:photoclean/src/exif_utils.dart';
 import 'package:photoclean/src/strip.dart';
 
@@ -85,23 +86,39 @@ void main() {
 
   group('EXIF 기록 도우미', () {
     test('좌표를 도/분/초 분수로 바꾼다', () {
-      expect(toDmsRational(37.5665), '37/1,33/1,594000/10000');
-      expect(toDmsRational(-127.5), '127/1,30/1,0/10000');
+      final r = dmsRationals(37.5665);
+      expect('${r[0].numerator}/${r[0].denominator}', '37/1');
+      expect('${r[1].numerator}/${r[1].denominator}', '33/1');
+      expect('${r[2].numerator}/${r[2].denominator}', '594000/10000');
     });
 
-    test('기록 속성을 만든다', () {
-      final a = buildStampAttributes(
-        date: DateTime(2026, 11, 10, 14, 30),
-        itemName: '아이폰 13',
-        memo: '당근 50만원',
-        place: '강남역',
-        lat: 37.5,
-        lng: 127.0,
+    test('기록 설명을 만든다', () {
+      expect(
+        buildDescription(itemName: '아이폰 13', memo: '당근 50만원', place: '강남역'),
+        '물건: 아이폰 13 | 메모: 당근 50만원 | 장소: 강남역',
       );
-      expect(a['DateTimeOriginal'], '2026:11:10 14:30:00');
-      expect(a['ImageDescription'], '물건: 아이폰 13 | 메모: 당근 50만원 | 장소: 강남역');
-      expect(a['GPSLatitudeRef'], 'N');
-      expect(a['GPSLongitudeRef'], 'E');
+    });
+
+    test('사진에 날짜·설명·GPS를 새기면 JPEG 저장 후에도 읽힌다', () {
+      final im = img.Image(width: 8, height: 8);
+      final gpsOk = applyStamp(
+        im,
+        date: DateTime(2026, 11, 10, 14, 30),
+        itemName: 'iPhone 13',
+        memo: 'Danggeun 500000',
+        lat: 37.5665,
+        lng: 126.978,
+      );
+      expect(gpsOk, isTrue);
+      final bytes = img.encodeJpg(im, quality: 90);
+      final back = img.decodeJpg(Uint8List.fromList(bytes))!;
+      expect(back.exif.imageIfd['DateTime'].toString(),
+          contains('2026:11:10 14:30:00'));
+      expect(back.exif.imageIfd['ImageDescription'].toString(),
+          contains('iPhone 13'));
+      expect(back.exif.exifIfd['DateTimeOriginal'].toString(),
+          contains('2026:11:10 14:30:00'));
+      expect(back.exif.gpsIfd['GPSLatitudeRef'].toString(), contains('N'));
     });
 
     test('파일 이름을 안전하게 만든다', () {

@@ -1,11 +1,11 @@
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:exif/exif.dart';
 import 'package:flutter/material.dart';
 import 'package:gal/gal.dart';
 import 'package:image/image.dart' as img;
 import 'package:image_picker/image_picker.dart';
-import 'package:native_exif/native_exif.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 
@@ -49,20 +49,20 @@ class _CleanScreenState extends State<CleanScreen> {
       final item = _Item(f.name);
       _items.add(item);
       try {
+        final src = await f.readAsBytes();
+
         // 1) 원본의 메타데이터 확인
         try {
-          final exif = await Exif.fromPath(f.path);
-          final attrs = await exif.getAttributes() ?? {};
-          item.beforeCount = attrs.length;
-          item.hadGps = attrs.keys.any((k) => k.startsWith('GPS'));
-          item.takenAt = attrs['DateTimeOriginal']?.toString();
-          await exif.close();
+          final tags = await readExifFromBytes(src);
+          item.beforeCount = tags.length;
+          item.hadGps = tags.keys.any((k) => k.contains('GPS'));
+          item.takenAt = tags['EXIF DateTimeOriginal']?.printable ??
+              tags['Image DateTime']?.printable;
         } catch (_) {
           // 읽기 실패해도 지우기는 계속한다.
         }
 
         // 2) 무손실 제거 (JPEG/PNG). 다른 형식은 JPEG로 다시 저장.
-        final src = await f.readAsBytes();
         Uint8List cleaned;
         String ext;
         final r = stripMetadata(src);
@@ -76,6 +76,7 @@ class _CleanScreenState extends State<CleanScreen> {
             item.error = '지원하지 않는 사진 형식';
             continue;
           }
+          decoded.exif = img.ExifData();
           cleaned = Uint8List.fromList(img.encodeJpg(decoded, quality: 95));
           ext = 'jpg';
           item.reEncoded = true;
@@ -88,11 +89,8 @@ class _CleanScreenState extends State<CleanScreen> {
 
         // 3) 결과 검증: 남은 메타데이터 수
         try {
-          final exif2 = await Exif.fromPath(outPath);
-          final attrs2 = await exif2.getAttributes() ?? {};
-          item.afterCount =
-              attrs2.keys.where((k) => k != 'ImageWidth' && k != 'ImageLength').length;
-          await exif2.close();
+          final tags2 = await readExifFromBytes(cleaned);
+          item.afterCount = tags2.length;
         } catch (_) {
           item.afterCount = 0;
         }
@@ -112,7 +110,7 @@ class _CleanScreenState extends State<CleanScreen> {
   Future<void> _share() async {
     final files = _cleanedFiles;
     if (files.isEmpty) return;
-    await Share.shareXFiles(files, text: null);
+    await Share.shareXFiles(files);
   }
 
   Future<void> _saveAll() async {
