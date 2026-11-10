@@ -133,7 +133,7 @@ class _StampScreenState extends State<StampScreen> {
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 40),
       child: Form(
         key: _formKey,
         child: Column(

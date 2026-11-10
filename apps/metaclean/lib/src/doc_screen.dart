@@ -242,7 +242,7 @@ class _DocScreenState extends State<DocScreen> {
   Widget build(BuildContext context) {
     final picked = _bytes != null;
     return ListView(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 40),
       children: [
         const Text(
           '사용설명서 같은 문서에도 작성자 이름·회사·만든 날짜가 숨어 있어요. '

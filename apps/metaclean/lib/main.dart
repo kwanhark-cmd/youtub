@@ -44,8 +44,13 @@ class _Home extends StatelessWidget {
             ],
           ),
         ),
-        body: const TabBarView(
-          children: [CleanScreen(), EditScreen(), DocScreen(), StampScreen()],
+        // 시스템 내비게이션 바(제스처 바)에 아래쪽 버튼이 가려 눌리지 않던 문제를
+        // 막기 위해 아래쪽만 SafeArea로 감싼다.
+        body: const SafeArea(
+          top: false,
+          child: TabBarView(
+            children: [CleanScreen(), EditScreen(), DocScreen(), StampScreen()],
+          ),
         ),
       ),
     );

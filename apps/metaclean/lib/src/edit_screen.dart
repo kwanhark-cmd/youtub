@@ -173,7 +173,7 @@ class _EditScreenState extends State<EditScreen> {
   Widget build(BuildContext context) {
     final done = _outFiles.isNotEmpty && !_busy;
     return ListView(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 40),
       children: [
         const Text(
           '사진 정보를 전부 지우지 않고 날짜·위치·촬영 기기 중 고른 것만 바꿔요. '
