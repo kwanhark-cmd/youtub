@@ -1,0 +1,30 @@
+name: metaclean
+description: 사진·문서 메타데이터 지우개·수정·기록 앱 (중고거래용)
+publish_to: none
+version: 2.0.0+1
+
+environment:
+  sdk: ^3.5.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+  image_picker: ^1.1.2
+  exif: ^3.3.0
+  image: ^4.5.0
+  share_plus: ">=10.0.0 <11.0.0"
+  gal: ^2.3.0
+  path_provider: ^2.1.0
+  intl: ">=0.19.0 <0.22.0"
+  file_picker: ^10.0.0
+  syncfusion_flutter_pdf: ^31.0.0
+  archive: ^4.0.0
+  xml: ^6.5.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ">=4.0.0 <7.0.0"
+
+flutter:
+  uses-material-design: true
