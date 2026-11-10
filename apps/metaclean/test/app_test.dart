@@ -13,19 +13,18 @@ void main() {
 
     await tester.tap(find.text('사진 수정'));
     await tester.pumpAndSettle();
-    expect(find.text('촬영 날짜 바꾸기'), findsOneWidget);
+    // 날짜·위치·기기 세 항목 모두 '그대로/지우기/바꾸기'를 고를 수 있다
+    expect(find.text('촬영 날짜'), findsOneWidget);
+    expect(find.text('촬영 위치'), findsOneWidget);
+    expect(find.text('촬영 기기 (스마트폰 제조사·기종)'), findsOneWidget);
+    expect(find.text('그대로'), findsNWidgets(3));
+    expect(find.text('지우기'), findsNWidgets(3));
     expect(find.text('사진 고르고 수정하기 (여러 장 가능)'), findsOneWidget);
 
-    // 위치 "바꾸기"를 누르면 좌표 입력 칸이 나온다
-    expect(find.text('촬영 기기 (스마트폰 제조사·기종)'), findsOneWidget);
+    // 날짜 '바꾸기'(첫 항목)를 누르면 날짜 고르기 줄이 나온다
     await tester.tap(find.text('바꾸기').first);
     await tester.pumpAndSettle();
-    expect(find.byType(TextField), findsNWidgets(2));
-    await tester.drag(find.byType(ListView), const Offset(0, -300));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('바꾸기').last);
-    await tester.pumpAndSettle();
-    expect(find.byType(TextField), findsNWidgets(4));
+    expect(find.text('눌러서 날짜와 시각 고르기'), findsOneWidget);
 
     await tester.tap(find.text('문서'));
     await tester.pumpAndSettle();

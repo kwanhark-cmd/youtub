@@ -5,11 +5,22 @@ import 'package:image/image.dart' as img;
 import 'exif_utils.dart';
 import 'strip.dart';
 
+/// 촬영 날짜 정보를 어떻게 할지.
+enum DateAction { keep, remove, change }
+
 /// 위치 정보를 어떻게 할지.
 enum GpsAction { keep, remove, change }
 
 /// 촬영 기기(제조사·기종) 정보를 어떻게 할지.
 enum DeviceAction { keep, remove, change }
+
+/// 촬영 시각이 남는 날짜 칸들 (0번 묶음 / 세부 묶음).
+const _dateTagsIfd0 = [0x0132]; // DateTime
+const _dateTagsExif = [
+  0x9003, 0x9004, // DateTimeOriginal, DateTimeDigitized
+  0x9290, 0x9291, 0x9292, // SubSecTime 3종
+  0x9010, 0x9011, 0x9012, // OffsetTime 3종 (시간대)
+];
 
 /// 기기를 알아볼 수 있는 칸들 (0번 묶음 / 세부 묶음).
 const _deviceTagsIfd0 = [0x010F, 0x0110, 0x0131, 0xC614]; // 제조사, 기종, 소프트웨어, 고유 기종명
@@ -38,6 +49,7 @@ class PhotoEditResult {
 /// 지원하지 않는 형식이면 null.
 PhotoEditResult? editPhotoMeta(
   Uint8List src, {
+  DateAction dateAction = DateAction.keep,
   DateTime? date,
   GpsAction gps = GpsAction.keep,
   double? lat,
@@ -46,6 +58,9 @@ PhotoEditResult? editPhotoMeta(
   String? make,
   String? model,
 }) {
+  if (dateAction == DateAction.change && date == null) {
+    throw ArgumentError('날짜를 바꾸려면 새 날짜가 필요합니다');
+  }
   if (gps == GpsAction.change && (lat == null || lng == null)) {
     throw ArgumentError('위치를 바꾸려면 위도와 경도가 모두 필요합니다');
   }
@@ -55,17 +70,34 @@ PhotoEditResult? editPhotoMeta(
     throw ArgumentError('기기를 바꾸려면 제조사나 기종을 적어야 합니다');
   }
 
+  // 날짜가 숨어 남는 GPS 시각·날짜 칸을 지운다.
+  void clearGpsTime(img.ExifData exif) {
+    if (exif.imageIfd.sub.containsKey('gps')) {
+      exif.gpsIfd.data.remove(0x0007); // GPSTimeStamp
+      exif.gpsIfd.data.remove(0x001D); // GPSDateStamp
+    }
+  }
+
   void apply(img.ExifData exif) {
-    if (date != null) {
-      final d = exifDate(date);
-      exif.imageIfd['DateTime'] = d;
-      exif.exifIfd['DateTimeOriginal'] = d;
-      exif.exifIfd['DateTimeDigitized'] = d;
-      // 원래 촬영 시각이 남는 GPS 시각 칸은 지운다.
-      if (exif.imageIfd.sub.containsKey('gps')) {
-        exif.gpsIfd.data.remove(0x0007); // GPSTimeStamp
-        exif.gpsIfd.data.remove(0x001D); // GPSDateStamp
-      }
+    switch (dateAction) {
+      case DateAction.keep:
+        break;
+      case DateAction.remove:
+        for (final t in _dateTagsIfd0) {
+          exif.imageIfd.data.remove(t);
+        }
+        if (exif.imageIfd.sub.containsKey('exif')) {
+          for (final t in _dateTagsExif) {
+            exif.exifIfd.data.remove(t);
+          }
+        }
+        clearGpsTime(exif);
+      case DateAction.change:
+        final d = exifDate(date!);
+        exif.imageIfd['DateTime'] = d;
+        exif.exifIfd['DateTimeOriginal'] = d;
+        exif.exifIfd['DateTimeDigitized'] = d;
+        clearGpsTime(exif);
     }
     switch (gps) {
       case GpsAction.keep:

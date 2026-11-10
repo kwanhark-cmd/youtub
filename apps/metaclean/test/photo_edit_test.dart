@@ -57,6 +57,7 @@ void main() {
     final src = _sampleJpeg();
     final r = editPhotoMeta(
       src,
+      dateAction: DateAction.change,
       date: DateTime(2026, 11, 10, 9, 30),
       gps: GpsAction.change,
       lat: 37.5665,
@@ -95,7 +96,8 @@ void main() {
   });
 
   test('날짜만 바꾸면 위치는 그대로다', () async {
-    final r = editPhotoMeta(_sampleJpeg(), date: DateTime(2025, 1, 2, 3, 4, 5))!;
+    final r = editPhotoMeta(_sampleJpeg(),
+        dateAction: DateAction.change, date: DateTime(2025, 1, 2, 3, 4, 5))!;
     final tags = await readExifFromBytes(r.bytes);
     expect(tags['EXIF DateTimeOriginal']!.printable, '2025:01:02 03:04:05');
     expect(_deg(tags['GPS GPSLatitude']!), closeTo(35.1796, 1e-4));
@@ -104,11 +106,28 @@ void main() {
   test('EXIF가 없는 PNG는 JPEG로 바꿔서 새긴다', () async {
     final png = img.encodePng(img.Image(width: 8, height: 8));
     final r = editPhotoMeta(Uint8List.fromList(png),
-        date: DateTime(2026, 1, 1), gps: GpsAction.change, lat: -33.8688, lng: 151.2093)!;
+        dateAction: DateAction.change,
+        date: DateTime(2026, 1, 1),
+        gps: GpsAction.change,
+        lat: -33.8688,
+        lng: 151.2093)!;
     expect(r.reEncoded, isTrue);
     final tags = await readExifFromBytes(r.bytes);
     expect(tags['EXIF DateTimeOriginal']!.printable, '2026:01:01 00:00:00');
     expect(tags['GPS GPSLatitudeRef']!.printable, 'S');
+  });
+
+  test('촬영 날짜만 지운다: 위치·기기는 그대로', () async {
+    final r = editPhotoMeta(_sampleJpeg(), dateAction: DateAction.remove)!;
+    final tags = await readExifFromBytes(r.bytes);
+    expect(tags.containsKey('Image DateTime'), isFalse);
+    expect(tags.containsKey('EXIF DateTimeOriginal'), isFalse);
+    expect(tags.containsKey('EXIF DateTimeDigitized'), isFalse);
+    expect(tags.containsKey('GPS GPSDate'), isFalse);
+    expect(_has(r.bytes, '2024:03:05'), isFalse);
+    // 위치·기기는 남아 있다
+    expect(tags['Image Make']!.printable, 'SAMSUNG');
+    expect(_deg(tags['GPS GPSLatitude']!), closeTo(35.1796, 1e-4));
   });
 
   test('촬영 기기만 바꾼다: 날짜·위치는 그대로', () async {
@@ -134,6 +153,11 @@ void main() {
 
   test('위치를 바꾸라면서 좌표가 없으면 오류', () {
     expect(() => editPhotoMeta(_sampleJpeg(), gps: GpsAction.change),
+        throwsArgumentError);
+  });
+
+  test('날짜를 바꾸라면서 날짜가 없으면 오류', () {
+    expect(() => editPhotoMeta(_sampleJpeg(), dateAction: DateAction.change),
         throwsArgumentError);
   });
 }

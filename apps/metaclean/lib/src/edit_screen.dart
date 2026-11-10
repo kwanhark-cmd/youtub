@@ -34,7 +34,7 @@ class _EditScreenState extends State<EditScreen> {
   final _modelCtrl = TextEditingController();
 
   DeviceAction _device = DeviceAction.keep;
-  bool _changeDate = true;
+  DateAction _dateAction = DateAction.keep;
   DateTime _date = DateTime.now();
   GpsAction _gps = GpsAction.keep;
   bool _busy = false;
@@ -75,7 +75,7 @@ class _EditScreenState extends State<EditScreen> {
   Future<void> _run() async {
     double? lat;
     double? lng;
-    if (!_changeDate &&
+    if (_dateAction == DateAction.keep &&
         _gps == GpsAction.keep &&
         _device == DeviceAction.keep) {
       _say('바꿀 항목을 하나 이상 골라 주세요 (날짜·위치·촬영 기기)');
@@ -109,7 +109,8 @@ class _EditScreenState extends State<EditScreen> {
         final src = await f.readAsBytes();
         final r = editPhotoMeta(
           src,
-          date: _changeDate ? _date : null,
+          dateAction: _dateAction,
+          date: _date,
           gps: _gps,
           lat: lat,
           lng: lng,
@@ -182,21 +183,32 @@ class _EditScreenState extends State<EditScreen> {
         ),
         const SizedBox(height: 12),
         Card(
-          child: Column(
-            children: [
-              SwitchListTile(
-                title: const Text('촬영 날짜 바꾸기'),
-                value: _changeDate,
-                onChanged: (v) => setState(() => _changeDate = v),
-              ),
-              if (_changeDate)
-                ListTile(
-                  leading: const Icon(Icons.calendar_month),
-                  title: Text(DateFormat('yyyy년 M월 d일 HH:mm').format(_date)),
-                  subtitle: const Text('눌러서 날짜와 시각 고르기'),
-                  onTap: _pickDateTime,
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('촬영 날짜', style: TextStyle(fontSize: 16)),
+                const SizedBox(height: 8),
+                SegmentedButton<DateAction>(
+                  segments: const [
+                    ButtonSegment(value: DateAction.keep, label: Text('그대로')),
+                    ButtonSegment(value: DateAction.remove, label: Text('지우기')),
+                    ButtonSegment(value: DateAction.change, label: Text('바꾸기')),
+                  ],
+                  selected: {_dateAction},
+                  onSelectionChanged: (s) => setState(() => _dateAction = s.first),
                 ),
-            ],
+                if (_dateAction == DateAction.change)
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: const Icon(Icons.calendar_month),
+                    title: Text(DateFormat('yyyy년 M월 d일 HH:mm').format(_date)),
+                    subtitle: const Text('눌러서 날짜와 시각 고르기'),
+                    onTap: _pickDateTime,
+                  ),
+              ],
+            ),
           ),
         ),
         Card(
