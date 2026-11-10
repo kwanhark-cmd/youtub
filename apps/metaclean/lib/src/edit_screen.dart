@@ -9,6 +9,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 
 import 'photo_edit.dart';
+import 'plus_code.dart';
 
 /// 사진의 날짜·위치만 골라서 고친다. 나머지 정보는 그대로 둔다.
 class EditScreen extends StatefulWidget {
@@ -28,8 +29,7 @@ class _Done {
 
 class _EditScreenState extends State<EditScreen> {
   final _picker = ImagePicker();
-  final _latCtrl = TextEditingController();
-  final _lngCtrl = TextEditingController();
+  final _locCtrl = TextEditingController();
   final _makeCtrl = TextEditingController();
   final _modelCtrl = TextEditingController();
 
@@ -42,8 +42,7 @@ class _EditScreenState extends State<EditScreen> {
 
   @override
   void dispose() {
-    _latCtrl.dispose();
-    _lngCtrl.dispose();
+    _locCtrl.dispose();
     _makeCtrl.dispose();
     _modelCtrl.dispose();
     super.dispose();
@@ -88,12 +87,13 @@ class _EditScreenState extends State<EditScreen> {
       return;
     }
     if (_gps == GpsAction.change) {
-      lat = double.tryParse(_latCtrl.text.trim());
-      lng = double.tryParse(_lngCtrl.text.trim());
-      if (lat == null || lng == null || lat.abs() > 90 || lng.abs() > 180) {
-        _say('위도(-90~90)와 경도(-180~180)를 숫자로 적어 주세요');
+      final parsed = parseLocation(_locCtrl.text);
+      if (!parsed.ok) {
+        _say(parsed.error!);
         return;
       }
+      lat = parsed.lat;
+      lng = parsed.lng;
     }
     final files = await _picker.pickMultiImage();
     if (files.isEmpty) return;
@@ -230,36 +230,19 @@ class _EditScreenState extends State<EditScreen> {
                 ),
                 if (_gps == GpsAction.change) ...[
                   const SizedBox(height: 10),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: TextField(
-                          controller: _latCtrl,
-                          keyboardType: const TextInputType.numberWithOptions(
-                              decimal: true, signed: true),
-                          decoration: const InputDecoration(
-                            labelText: '위도 (예: 37.5665)',
-                            border: OutlineInputBorder(),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: TextField(
-                          controller: _lngCtrl,
-                          keyboardType: const TextInputType.numberWithOptions(
-                              decimal: true, signed: true),
-                          decoration: const InputDecoration(
-                            labelText: '경도 (예: 126.9780)',
-                            border: OutlineInputBorder(),
-                          ),
-                        ),
-                      ),
-                    ],
+                  TextField(
+                    controller: _locCtrl,
+                    decoration: const InputDecoration(
+                      labelText: '좌표 또는 플러스코드',
+                      hintText: '37.2954, 127.1518  또는  75W2+4PV 용인',
+                      border: OutlineInputBorder(),
+                    ),
                   ),
                   const SizedBox(height: 6),
                   const Text(
-                    '지도 앱에서 원하는 곳을 길게 누르면 위도·경도 숫자가 나와요.',
+                    '구글 지도에서 원하는 곳을 길게 누른 뒤, 아래에 뜨는 좌표나 '
+                    '플러스코드(예: 75W2+4PV 용인)를 그대로 복사해 붙여넣으세요. '
+                    '짧은 플러스코드는 뒤에 도시 이름이 있어야 풀 수 있어요.',
                     style: TextStyle(fontSize: 12),
                   ),
                 ],
