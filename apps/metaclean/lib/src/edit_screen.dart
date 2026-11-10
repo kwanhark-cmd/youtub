@@ -199,7 +199,7 @@ class _EditScreenState extends State<EditScreen> {
                   selected: {_dateAction},
                   onSelectionChanged: (s) => setState(() => _dateAction = s.first),
                 ),
-                if (_dateAction == DateAction.change)
+                if (_dateAction == DateAction.change) ...[
                   ListTile(
                     contentPadding: EdgeInsets.zero,
                     leading: const Icon(Icons.calendar_month),
@@ -207,6 +207,12 @@ class _EditScreenState extends State<EditScreen> {
                     subtitle: const Text('눌러서 날짜와 시각 고르기'),
                     onTap: _pickDateTime,
                   ),
+                  const Text(
+                    '인화·현상된 옛 사진을 찍었다면, 그 사진의 실제 날짜로 지정해 두면 '
+                    '갤러리에서 제 날짜에 정리돼요. (오늘 찍은 날짜 대신 원하는 날짜가 들어갑니다.)',
+                    style: TextStyle(fontSize: 12),
+                  ),
+                ],
               ],
             ),
           ),
@@ -279,7 +285,8 @@ class _EditScreenState extends State<EditScreen> {
                         child: TextField(
                           controller: _makeCtrl,
                           decoration: const InputDecoration(
-                            labelText: '제조사 (예: samsung)',
+                            labelText: '제조사',
+                            hintText: '예: Canon',
                             border: OutlineInputBorder(),
                           ),
                         ),
@@ -289,12 +296,19 @@ class _EditScreenState extends State<EditScreen> {
                         child: TextField(
                           controller: _modelCtrl,
                           decoration: const InputDecoration(
-                            labelText: '기종 (예: SM-S921N)',
+                            labelText: '기종',
+                            hintText: '예: AE-1',
                             border: OutlineInputBorder(),
                           ),
                         ),
                       ),
                     ],
+                  ),
+                  const SizedBox(height: 6),
+                  const Text(
+                    '필름 카메라로 찍어 스캔한 사진이면 그 카메라 이름(예: Canon AE-1, '
+                    'Nikon FM2)을 적을 수 있어요. 비워 두면 기기 정보 없이 저장됩니다.',
+                    style: TextStyle(fontSize: 12),
                   ),
                 ],
               ],

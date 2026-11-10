@@ -156,6 +156,26 @@ void main() {
         throwsArgumentError);
   });
 
+  test('EXIF가 전혀 없는 사진(인화사진 촬영)에 날짜·카메라를 새로 만든다', () async {
+    // 메타데이터가 하나도 없는 평범한 JPEG (인화사진을 폰으로 찍은 경우를 흉내)
+    final plain = Uint8List.fromList(img.encodeJpg(img.Image(width: 12, height: 12)));
+    expect((await readExifFromBytes(plain)).length, 0);
+
+    final r = editPhotoMeta(
+      plain,
+      dateAction: DateAction.change,
+      date: DateTime(1980, 1, 1, 12, 0, 0),
+      device: DeviceAction.change,
+      make: 'Canon',
+      model: 'AE-1',
+    )!;
+    final tags = await readExifFromBytes(r.bytes);
+    expect(tags['EXIF DateTimeOriginal']!.printable, '1980:01:01 12:00:00');
+    expect(tags['Image DateTime']!.printable, '1980:01:01 12:00:00');
+    expect(tags['Image Make']!.printable, 'Canon');
+    expect(tags['Image Model']!.printable, 'AE-1');
+  });
+
   test('날짜를 바꾸라면서 날짜가 없으면 오류', () {
     expect(() => editPhotoMeta(_sampleJpeg(), dateAction: DateAction.change),
         throwsArgumentError);
