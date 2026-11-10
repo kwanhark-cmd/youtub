@@ -4,20 +4,6 @@ import 'package:intl/intl.dart';
 /// EXIF 날짜 형식 (yyyy:MM:dd HH:mm:ss).
 String exifDate(DateTime t) => DateFormat('yyyy:MM:dd HH:mm:ss').format(t);
 
-/// 십진수 좌표를 EXIF 도/분/초 분수 목록으로 바꾼다.
-List<img.Rational> dmsRationals(double decimal) {
-  final abs = decimal.abs();
-  final deg = abs.floor();
-  final minFull = (abs - deg) * 60;
-  final min = minFull.floor();
-  final secTimes1e4 = ((minFull - min) * 60 * 10000).round();
-  return [
-    img.Rational(deg, 1),
-    img.Rational(min, 1),
-    img.Rational(secTimes1e4, 10000),
-  ];
-}
-
 /// 기록 설명 한 줄을 만든다.
 String buildDescription({
   required String itemName,
@@ -52,11 +38,7 @@ bool applyStamp(
   var gpsOk = false;
   if (lat != null && lng != null) {
     try {
-      final gps = exif.gpsIfd;
-      gps['GPSLatitudeRef'] = lat >= 0 ? 'N' : 'S';
-      gps['GPSLatitude'] = img.IfdValueRational.list(dmsRationals(lat));
-      gps['GPSLongitudeRef'] = lng >= 0 ? 'E' : 'W';
-      gps['GPSLongitude'] = img.IfdValueRational.list(dmsRationals(lng));
+      exif.gpsIfd.setGpsLocation(latitude: lat, longitude: lng);
       gpsOk = true;
     } catch (_) {
       gpsOk = false;

@@ -85,13 +85,6 @@ void main() {
   });
 
   group('EXIF 기록 도우미', () {
-    test('좌표를 도/분/초 분수로 바꾼다', () {
-      final r = dmsRationals(37.5665);
-      expect('${r[0].numerator}/${r[0].denominator}', '37/1');
-      expect('${r[1].numerator}/${r[1].denominator}', '33/1');
-      expect('${r[2].numerator}/${r[2].denominator}', '594000/10000');
-    });
-
     test('기록 설명을 만든다', () {
       expect(
         buildDescription(itemName: '아이폰 13', memo: '당근 50만원', place: '강남역'),
