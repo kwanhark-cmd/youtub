@@ -1,0 +1,68 @@
+name: 사진 메타지우개 검사와 빌드
+
+on:
+  push:
+    branches: [main, 'claude/**']
+    paths: ['apps/photoclean/**', '.github/workflows/photoclean.yml']
+  workflow_dispatch:
+
+env:
+  FLUTTER_VERSION: '3.47.9'
+
+jobs:
+  test:
+    name: 검사·테스트
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+      - name: 의존성 설치
+        working-directory: apps/photoclean
+        run: flutter pub get
+      - name: 코드 검사
+        working-directory: apps/photoclean
+        run: flutter analyze
+      - name: 테스트
+        working-directory: apps/photoclean
+        run: flutter test
+
+  apk:
+    name: 안드로이드 APK 빌드
+    needs: test
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+      - name: 안드로이드 뼈대 생성
+        working-directory: apps/photoclean
+        run: flutter create --platforms=android --org com.kwanhark --project-name photoclean .
+      - name: 앱 이름·권한 설정
+        working-directory: apps/photoclean
+        run: |
+          M=android/app/src/main/AndroidManifest.xml
+          sed -i 's/android:label="photoclean"/android:label="사진 메타지우개"/' "$M"
+          sed -i '0,/<application/s//<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="28" \/>\n    <application/' "$M"
+          cat "$M"
+      - name: APK 빌드
+        working-directory: apps/photoclean
+        run: flutter build apk --release
+      - name: APK 올리기
+        uses: actions/upload-artifact@v4
+        with:
+          name: 사진메타지우개-APK
+          path: apps/photoclean/build/app/outputs/flutter-apk/app-release.apk
+          if-no-files-found: error
