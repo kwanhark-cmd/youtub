@@ -27,6 +27,15 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('눌러서 날짜와 시각 고르기'), findsOneWidget);
 
+    // 옛 인화 사진 날짜(1980년대 이전)도 고를 수 있어야 한다
+    await tester.tap(find.text('눌러서 날짜와 시각 고르기'));
+    await tester.pumpAndSettle();
+    final picker =
+        tester.widget<DatePickerDialog>(find.byType(DatePickerDialog));
+    expect(picker.firstDate.year, lessThanOrEqualTo(1900));
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
+
     await tester.tap(find.text('문서'));
     await tester.pumpAndSettle();
     expect(find.text('문서 고르기'), findsOneWidget);

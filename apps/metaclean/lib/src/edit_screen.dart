@@ -63,8 +63,11 @@ class _EditScreenState extends State<EditScreen> {
     final d = await showDatePicker(
       context: context,
       initialDate: _date,
-      firstDate: DateTime(1990),
+      // 옛 인화 사진(1980년대 이전)의 날짜도 고를 수 있어야 한다.
+      firstDate: DateTime(1900),
       lastDate: DateTime(2100),
+      // 옛 날짜를 고르기 쉽게 연도 목록부터 보여 준다.
+      initialDatePickerMode: DatePickerMode.year,
     );
     if (d == null || !mounted) return;
     final t = await showTimePicker(

@@ -42,6 +42,8 @@ class UpdateBanner extends StatelessWidget {
             Expanded(
               child: Text(
                 '새 버전이 나왔어요\n${versionLabel(info.version, info.build)}',
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
                 style: TextStyle(color: scheme.onPrimaryContainer, height: 1.3),
               ),
             ),
@@ -108,7 +110,9 @@ class _UpdateDialogState extends State<UpdateDialog> {
   }
 
   Future<void> _get() async {
-    final ok = await widget.openUrl(latestApkUrl);
+    final info = _result?.info;
+    if (info == null) return;
+    final ok = await widget.openUrl(apkUrlFor(info.build));
     if (!mounted) return;
     setState(() => _openFailed = !ok);
   }
@@ -120,6 +124,12 @@ class _UpdateDialogState extends State<UpdateDialog> {
     final available = !_checking && r?.status == UpdateStatus.available;
     final info = r?.info;
 
+    // 정식 설치 파일끼리는 서명 열쇠가 같아서 덮어 설치된다. 시험판은 그렇지 않을 수 있다.
+    final installHint = widget.currentBuild > 0
+        ? '지금 앱은 지우지 않아도 돼요.'
+        : '이 앱은 시험판이라 새 버전이 그 위에 설치되지 않을 수 있어요. '
+            '설치가 안 되면 이 앱을 지운 뒤 다시 설치해 주세요.';
+
     final String status;
     if (_checking) {
       status = '새 버전이 있는지 확인하는 중…';
@@ -127,6 +137,8 @@ class _UpdateDialogState extends State<UpdateDialog> {
       status = '새 버전이 나왔어요: ${versionLabel(info!.version, info.build)}';
     } else if (r?.status == UpdateStatus.upToDate) {
       status = '지금 쓰는 것이 가장 새 버전이에요.';
+    } else if (r?.status == UpdateStatus.notPublished) {
+      status = '아직 올라온 새 버전이 없어요.';
     } else {
       status = '확인하지 못했어요. 인터넷 연결을 확인하고 다시 눌러 주세요.';
     }
@@ -164,12 +176,13 @@ class _UpdateDialogState extends State<UpdateDialog> {
               Text(info.notes, style: const TextStyle(height: 1.4)),
             ],
             const SizedBox(height: 10),
-            const Text(
+            Text(
               '받는 방법\n'
               '① 아래 [새 버전 받기]를 누르면 설치 파일을 내려받아요.\n'
-              '② 내려받은 파일을 열고 [업데이트]를 누르면 끝이에요.\n'
-              '지금 앱은 지우지 않아도 돼요.',
-              style: TextStyle(height: 1.5),
+              '② 내려받은 파일(metaclean-plus-${info.build}.apk)을 열고 '
+              '[업데이트]를 누르면 끝이에요.\n'
+              '$installHint',
+              style: const TextStyle(height: 1.5),
             ),
           ],
           if (_openFailed) ...[

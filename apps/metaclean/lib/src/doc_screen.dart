@@ -127,7 +127,7 @@ class _DocScreenState extends State<DocScreen> {
     final d = await showDatePicker(
       context: context,
       initialDate: _date,
-      firstDate: DateTime(1990),
+      firstDate: DateTime(1900),
       lastDate: DateTime(2100),
     );
     if (d == null || !mounted) return;

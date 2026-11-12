@@ -14,8 +14,12 @@ const _base =
 /// 최신 버전 안내 파일.
 final Uri latestInfoUrl = Uri.parse('$_base/version.json');
 
-/// 최신 설치 파일(APK). 주소가 늘 같다.
+/// 최신 설치 파일(APK). 주소가 늘 같다. (처음 설치할 때 쓰는 주소)
 final Uri latestApkUrl = Uri.parse('$_base/metaclean-plus.apk');
+
+/// 그 빌드의 설치 파일 주소. 파일 이름에 빌드 번호가 들어 있어서, 여러 번
+/// 업데이트해도 내려받은 파일끼리 이름이 겹치지 않는다 (옛 파일을 잘못 여는 일을 막는다).
+Uri apkUrlFor(int build) => Uri.parse('$_base/metaclean-plus-$build.apk');
 
 /// 사람이 보는 내려받기 페이지.
 final Uri releasePageUrl = Uri.parse(
@@ -30,7 +34,16 @@ class UpdateInfo {
   final String notes;
 }
 
+/// 글자 수(코드 포인트 기준)를 넘으면 잘라 낸다. 이모지 같은 글자가 반으로 잘리지 않는다.
+String _clip(String s, int max) {
+  if (s.runes.length <= max) return s;
+  return '${String.fromCharCodes(s.runes.take(max))}…';
+}
+
 /// 안내 파일 내용을 읽는다. 형식이 맞지 않으면 null.
+///
+/// 안내 파일은 인터넷에서 온 것이라 그대로 믿지 않는다. 화면에 보여 줄 글은
+/// 길이를 제한해서, 내용이 이상해도 화면을 가리지 못하게 한다.
 UpdateInfo? parseUpdateInfo(String body) {
   try {
     final j = jsonDecode(body);
@@ -39,19 +52,21 @@ UpdateInfo? parseUpdateInfo(String body) {
     if (build is! int || build <= 0) return null;
     final version = j['version'];
     final notes = j['notes'];
-    var text = notes is String ? notes.trim() : '';
-    if (text.length > 600) text = '${text.substring(0, 600)}…';
     return UpdateInfo(
       build: build,
-      version: version is String ? version.trim() : '',
-      notes: text,
+      // 버전은 한 줄짜리 짧은 글자여야 한다 (예: 2.1.0).
+      version: version is String
+          ? _clip(version.replaceAll(RegExp(r'\s+'), ' ').trim(), 20)
+          : '',
+      notes: notes is String ? _clip(notes.trim(), 600) : '',
     );
   } catch (_) {
     return null;
   }
 }
 
-/// 주소의 글 내용을 가져오는 함수. 없으면(404 등) null. 테스트에서는 가짜로 바꾼다.
+/// 주소의 글 내용을 가져오는 함수. 아직 올라온 것이 없으면(404) null,
+/// 가져오지 못하면 예외. 테스트에서는 가짜로 바꾼다.
 typedef UpdateFetch = Future<String?> Function(Uri url);
 
 /// 인터넷에서 안내 파일을 가져온다. 연결이 안 되면 예외.
@@ -62,7 +77,9 @@ Future<String?> httpFetch(Uri url) async {
     final res = await req.close().timeout(const Duration(seconds: 10));
     if (res.statusCode != 200) {
       await res.drain<void>().timeout(const Duration(seconds: 5));
-      return null;
+      // 404 는 "아직 올라온 것이 없음". 그 밖의 응답은 "확인하지 못함"으로 다룬다.
+      if (res.statusCode == 404) return null;
+      throw HttpException('응답 ${res.statusCode}', uri: url);
     }
     // 안내 파일은 아주 작다. 엉뚱하게 큰 응답은 읽다가 그만둔다.
     final bytes = <int>[];
@@ -83,7 +100,10 @@ enum UpdateStatus {
   /// 더 새 버전이 있다.
   available,
 
-  /// 확인하지 못했다 (인터넷 연결 없음, 아직 올라온 버전 없음 등).
+  /// 아직 올라온 버전이 없다 (안내 파일이 없음).
+  notPublished,
+
+  /// 확인하지 못했다 (인터넷 연결 없음 등).
   unknown,
 }
 
@@ -100,7 +120,7 @@ Future<UpdateResult> checkForUpdate({
 }) async {
   try {
     final body = await fetch(latestInfoUrl);
-    if (body == null) return const UpdateResult(UpdateStatus.unknown);
+    if (body == null) return const UpdateResult(UpdateStatus.notPublished);
     final info = parseUpdateInfo(body);
     if (info == null) return const UpdateResult(UpdateStatus.unknown);
     return UpdateResult(
