@@ -39,7 +39,10 @@ void main() {
     expect(find.text('앱 정보·업데이트'), findsOneWidget);
     expect(find.text('지금 버전: 2.0.0 (빌드 60)'), findsOneWidget);
     expect(find.text('· 새 기능이 생겼어요'), findsOneWidget);
-    expect(find.textContaining('지금 앱은 지우지 않아도 돼요'), findsOneWidget);
+    // 새 버전은 기존 앱을 지운 뒤 설치한다고 순서대로 알려 준다
+    expect(find.textContaining('② 지금 깔려 있는 이 앱을 지워요'), findsOneWidget);
+    expect(find.textContaining('기존 앱을 지우지 않으면 설치되지 않아요'), findsOneWidget);
+    expect(find.textContaining('지우지 않아도'), findsNothing);
     // 켤 때 확인한 결과를 그대로 쓰고, 다시 묻지 않는다
     expect(asked, 1);
 
@@ -179,7 +182,7 @@ void main() {
     expect(find.byType(UpdateBanner), findsNothing);
   });
 
-  testWidgets('시험판에서는 덮어 설치가 안 될 수 있다고 알려 준다', (tester) async {
+  testWidgets('빌드 번호가 없는 시험판도 같은 방법을 안내한다', (tester) async {
     await phone(tester);
     await tester.pumpWidget(MetaCleanApp(
       updateFetch: (_) async => newer,
@@ -189,9 +192,7 @@ void main() {
     await tester.tap(find.byTooltip('앱 정보·업데이트'));
     await tester.pumpAndSettle();
     expect(find.text('지금 버전: 시험판'), findsOneWidget);
-    expect(find.textContaining('시험판이라 새 버전이 그 위에 설치되지 않을 수 있어요'),
-        findsOneWidget);
-    expect(find.textContaining('지금 앱은 지우지 않아도 돼요'), findsNothing);
+    expect(find.textContaining('② 지금 깔려 있는 이 앱을 지워요'), findsOneWidget);
   });
 
   testWidgets('인터넷 창을 못 열면 주소를 직접 보여 준다', (tester) async {

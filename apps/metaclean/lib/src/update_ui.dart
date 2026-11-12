@@ -124,12 +124,6 @@ class _UpdateDialogState extends State<UpdateDialog> {
     final available = !_checking && r?.status == UpdateStatus.available;
     final info = r?.info;
 
-    // 정식 설치 파일끼리는 서명 열쇠가 같아서 덮어 설치된다. 시험판은 그렇지 않을 수 있다.
-    final installHint = widget.currentBuild > 0
-        ? '지금 앱은 지우지 않아도 돼요.'
-        : '이 앱은 시험판이라 새 버전이 그 위에 설치되지 않을 수 있어요. '
-            '설치가 안 되면 이 앱을 지운 뒤 다시 설치해 주세요.';
-
     final String status;
     if (_checking) {
       status = '새 버전이 있는지 확인하는 중…';
@@ -176,13 +170,21 @@ class _UpdateDialogState extends State<UpdateDialog> {
               Text(info.notes, style: const TextStyle(height: 1.4)),
             ],
             const SizedBox(height: 10),
+            const Text('새 버전으로 바꾸는 방법'),
+            const SizedBox(height: 4),
             Text(
-              '받는 방법\n'
-              '① 아래 [새 버전 받기]를 누르면 설치 파일을 내려받아요.\n'
-              '② 내려받은 파일(metaclean-plus-${info.build}.apk)을 열고 '
-              '[업데이트]를 누르면 끝이에요.\n'
-              '$installHint',
+              '① 아래 [새 버전 받기]를 눌러 설치 파일을 내려받아요.\n'
+              '② 지금 깔려 있는 이 앱을 지워요.\n'
+              '    (앱 아이콘을 길게 누르고 [설치 삭제])\n'
+              '③ 내려받은 파일(metaclean-plus-${info.build}.apk)을 열고 '
+              '[설치]를 눌러요.',
               style: const TextStyle(height: 1.5),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              '기존 앱을 지우지 않으면 설치되지 않아요. '
+              '갤러리에 저장한 사진은 앱을 지워도 그대로 남아요.',
+              style: theme.textTheme.bodySmall,
             ),
           ],
           if (_openFailed) ...[

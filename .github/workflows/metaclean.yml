@@ -7,11 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       publish_anyway:
-        description: '이미 올라간 버전에서 이어지지 않는 커밋이라도 업데이트로 올리기 (보통은 끄고 둡니다)'
-        type: boolean
-        default: false
-      stamp_build:
-        description: '열쇠가 등록되지 않았어도 앱에 빌드 번호를 새기기 (고정 열쇠로 따로 서명할 때만 켭니다)'
+        description: '이미 올라간 버전에서 이어지지 않는 커밋이라도 새 버전으로 올리기 (보통은 끄고 둡니다)'
         type: boolean
         default: false
 
@@ -83,86 +79,23 @@ jobs:
       - name: APK 빌드
         working-directory: apps/metaclean
         env:
-          # 빌드 번호는 실행할 때마다 1씩 커진다. 안드로이드는 번호가 같거나 커야 덮어 설치해 준다.
+          # 빌드 번호는 실행할 때마다 1씩 커진다. 번호가 큰 것이 새 버전이다.
           BUILD: ${{ github.run_number }}
-          # 고정 열쇠가 등록돼 있는지만 알려 준다 (열쇠 값은 이 작업에 주지 않는다).
-          HAS_KEY: ${{ secrets.METACLEAN_KEYSTORE_BASE64 != '' || inputs.stamp_build == true }}
         run: |
           VER="$(sed -n -E 's/^version:[[:space:]]*([0-9][^+[:space:]]*).*/\1/p' pubspec.yaml | head -1)"
           test -n "$VER"
-          # 고정 열쇠로 서명될 빌드에만 "빌드 번호"를 새긴다. 번호가 없는 앱은 시험판으로
-          # 표시되고, 켤 때 새 버전을 찾지 않는다 (시험용 열쇠로는 덮어 설치가 안 되므로).
-          APP_BUILD=0
-          if [ "$HAS_KEY" = "true" ]; then APP_BUILD="$BUILD"; fi
-          echo "버전 $VER · 빌드 $BUILD · 앱에 새기는 번호 $APP_BUILD"
+          echo "버전 $VER · 빌드 $BUILD"
+          # 서명 열쇠를 따로 두지 않는다. 설치 파일은 빌드할 때마다 새로 만들어지는 임시 열쇠로
+          # 서명되므로, 새 버전은 기존 앱을 지운 뒤 설치한다 (앱과 설명서가 그렇게 안내한다).
           flutter build apk --release --build-name="$VER" --build-number="$BUILD" \
-            --dart-define=APP_VERSION="$VER" --dart-define=APP_BUILD="$APP_BUILD"
+            --dart-define=APP_VERSION="$VER" --dart-define=APP_BUILD="$BUILD"
           mkdir -p "$GITHUB_WORKSPACE/out"
-          cp build/app/outputs/flutter-apk/app-release.apk "$GITHUB_WORKSPACE/out/unsigned.apk"
+          cp build/app/outputs/flutter-apk/app-release.apk "$GITHUB_WORKSPACE/out/metaclean-plus.apk"
           jq -n --argjson build "$BUILD" --arg version "$VER" --arg commit "$GITHUB_SHA" \
             --rawfile notes update_notes.txt \
             '{build: $build, version: $version, commit: $commit, notes: $notes}' \
             > "$GITHUB_WORKSPACE/out/version.json"
           cat "$GITHUB_WORKSPACE/out/version.json"
-      - name: 빌드 결과 넘기기 (서명 전)
-        uses: actions/upload-artifact@v4
-        with:
-          name: metaclean-build
-          path: out/
-          if-no-files-found: error
-          retention-days: 3
-
-  sign:
-    # 서명 열쇠는 이 작업에서만 쓴다. 여기서는 바깥에서 받아 온 코드(플러터 도구,
-    # 패키지, 빌드 플러그인)를 실행하지 않고, 러너에 깔려 있는 도구만 쓴다.
-    name: 서명 (고정 열쇠가 등록돼 있으면 그 열쇠로)
-    needs: apk
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    outputs:
-      signed: ${{ steps.sign.outputs.signed }}
-    steps:
-      - uses: actions/download-artifact@v4
-        with:
-          name: metaclean-build
-          path: in
-      - name: 서명
-        id: sign
-        env:
-          # 열쇠 파일은 저장소에 두지 않고 GitHub Secrets 에만 둔다.
-          # 열쇠 파일 자체가 비밀이라, 파일을 여는 암호는 고정값을 쓴다.
-          KEYSTORE_BASE64: ${{ secrets.METACLEAN_KEYSTORE_BASE64 }}
-        run: |
-          mkdir -p out
-          cp in/version.json out/version.json
-          SDK="${ANDROID_HOME:-$ANDROID_SDK_ROOT}"
-          BT="$(ls -d "$SDK"/build-tools/*/ | sort -V | tail -1)"
-          KS="$RUNNER_TEMP/metaclean.p12"
-          signed=false
-          if [ -n "$KEYSTORE_BASE64" ]; then
-            printf '%s' "$KEYSTORE_BASE64" | tr -d '[:space:]' | base64 -d > "$KS" 2>/dev/null || true
-            if keytool -list -keystore "$KS" -storepass metaclean -alias metaclean >/dev/null 2>&1; then
-              "${BT}apksigner" sign --ks "$KS" --ks-pass pass:metaclean --ks-key-alias metaclean \
-                --out out/metaclean-plus.apk in/unsigned.apk
-              signed=true
-            else
-              echo "::warning::METACLEAN_KEYSTORE_BASE64 값을 열쇠로 읽지 못했어요. 값을 처음부터 끝까지 다시 붙여 넣어 주세요. 이번에는 시험용 열쇠로 서명된 시험판만 남깁니다."
-            fi
-            rm -f "$KS"
-          else
-            echo "::warning::METACLEAN_KEYSTORE_BASE64 가 없어 시험용 열쇠로 서명된 시험판만 남깁니다. 시험판은 기존 앱 위에 덮어 설치되지 않고, 업데이트로 올라가지 않습니다."
-          fi
-          rm -f out/*.idsig
-          if [ "$signed" = true ]; then
-            APK=out/metaclean-plus.apk
-          else
-            # 시험판은 이름을 달리해서 정식 설치 파일과 헷갈리지 않게 한다.
-            APK=out/metaclean-plus-test.apk
-            cp in/unsigned.apk "$APK"
-          fi
-          echo "signed=$signed" >> "$GITHUB_OUTPUT"
-          # 서명한 열쇠의 지문(공개 정보). 빌드마다 같아야 덮어 설치가 된다.
-          "${BT}apksigner" verify --print-certs "$APK" | grep 'certificate SHA-256'
       - name: APK 올리기
         uses: actions/upload-artifact@v4
         with:
@@ -171,9 +104,10 @@ jobs:
           if-no-files-found: error
 
   release:
-    name: 업데이트로 올리기 (고정 열쇠로 서명됐을 때만)
-    needs: sign
-    if: needs.sign.outputs.signed == 'true'
+    # 누구나(로그인 없이) 어느 폰에서나 받을 수 있는 고정 주소에 새 버전을 올린다.
+    # 이 작업에서는 바깥에서 받아 온 코드를 실행하지 않는다.
+    name: 내려받기 주소에 올리기
+    needs: apk
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
@@ -210,35 +144,35 @@ jobs:
             echo "이미 같거나 더 새 빌드($OLD)가 올라가 있어 건너뜁니다."
             exit 0
           fi
-          # 이미 올라간 버전의 내용을 모두 담은 커밋만 업데이트로 올린다.
+          # 이미 올라간 버전의 내용을 모두 담은 커밋만 새 버전으로 올린다.
           # (옛 커밋에서 갈라진 다른 작업 가지가 고친 내용을 되돌려 놓는 일을 막는다.)
           if [ -n "$OLD_COMMIT" ] && [ "$PUBLISH_ANYWAY" != "true" ] && [ "$GITHUB_REF" != "refs/heads/main" ]; then
             STATUS="$(gh api "repos/$GH_REPO/compare/$OLD_COMMIT...$GITHUB_SHA" --jq .status 2>/dev/null || echo unknown)"
             if [ "$STATUS" != "ahead" ] && [ "$STATUS" != "identical" ]; then
-              echo "::warning::이 커밋은 이미 올라간 버전(빌드 $OLD, ${OLD_COMMIT:0:7})에서 이어지지 않아(상태: $STATUS) 업데이트로 올리지 않습니다. 그래도 올리려면 이 워크플로를 publish_anyway 를 켜고 직접 실행하세요."
+              echo "::warning::이 커밋은 이미 올라간 버전(빌드 $OLD, ${OLD_COMMIT:0:7})에서 이어지지 않아(상태: $STATUS) 새 버전으로 올리지 않습니다. 그래도 올리려면 이 워크플로를 publish_anyway 를 켜고 직접 실행하세요."
               exit 0
             fi
           fi
           TITLE="메타지우개 플러스 $VER (빌드 $NEW)"
-          NUMBERED_NAME="metaclean-plus-$NEW.apk"
+          # 같은 설치 파일을 두 이름으로 올린다.
+          #  - metaclean-plus.apk        : 이름이 늘 같은 파일. 처음 설치하거나 다른 폰에 설치할 때 쓴다.
+          #  - metaclean-plus-<빌드>.apk : 앱의 [새 버전 받기]가 여는 파일. 버전마다 이름이 달라서
+          #    폰의 내려받기 폴더에서 옛 파일과 헷갈리지 않는다.
+          NUMBERED="metaclean-plus-$NEW.apk"
+          cp metaclean-plus.apk "$NUMBERED"
           {
+            echo "## 설치 방법"
+            echo "1. 아래 **metaclean-plus.apk** 를 눌러 내려받습니다. (\`$NUMBERED\` 도 같은 파일입니다)"
+            echo "2. **이미 깔려 있는 메타지우개 플러스가 있으면 먼저 지웁니다.** (지우지 않으면 설치되지 않습니다)"
+            echo "3. 내려받은 파일을 열고 **설치**를 누릅니다."
+            echo
+            echo "갤러리에 저장한 사진은 앱을 지워도 그대로 남습니다."
+            echo
             echo "## 달라진 점"
             jq -r .notes version.json
             echo
-            echo "## 설치·업데이트 방법"
-            echo "1. 아래 **metaclean-plus.apk** 를 눌러 내려받습니다. (\`$NUMBERED_NAME\` 도 같은 파일입니다)"
-            echo "2. 내려받은 파일을 열고 **업데이트**(처음이면 **설치**)를 누릅니다."
-            echo
-            echo "같은 주소에서 받은 앱이 이미 깔려 있으면, 지우지 않아도 그 위에 바로 설치됩니다."
-            echo
             echo "만든 커밋: $GITHUB_SHA"
           } > "$RUNNER_TEMP/notes.md"
-          # 같은 설치 파일을 두 이름으로 올린다.
-          #  - metaclean-plus-<빌드>.apk : 앱의 [새 버전 받기]가 여는 파일. 버전마다 이름이 달라서
-          #    폰의 내려받기 폴더에서 옛 파일과 헷갈리지 않는다.
-          #  - metaclean-plus.apk        : 처음 설치할 때 쓰는, 이름이 늘 같은 파일.
-          NUMBERED="metaclean-plus-$NEW.apk"
-          cp metaclean-plus.apk "$NUMBERED"
           if gh release view "$TAG" >/dev/null 2>&1; then
             # 설치 파일을 먼저, 안내 파일(version.json)을 나중에 올린다.
             gh release upload "$TAG" "$NUMBERED" --clobber

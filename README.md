@@ -42,4 +42,4 @@ claude.ai 작업방을 주제별로 정리해 모아 두는 저장소입니다.
 - **구매 기록**: 받은 사진에 날짜·물건·메모·장소를 새겨 보관
 - 사용설명서·기능설명서: [`docs/메타지우개플러스_사용법.md`](docs/메타지우개플러스_사용법.md)
 - 코드: `apps/metaclean` · 설치 파일(늘 같은 주소): [Releases `metaclean-latest`](https://github.com/kwanhark-cmd/youtub/releases/tag/metaclean-latest)
-- 업데이트: 새 버전이 나오면 앱이 알려 주고, 기존 앱을 지우지 않고 그 위에 설치됩니다 (서명 열쇠를 Secrets `METACLEAN_KEYSTORE_BASE64` 에 한 번 등록해 둔 경우)
+- 업데이트: 새 버전이 나오면 앱이 알려 줍니다. 같은 주소에서 받아, 기존 앱을 지운 뒤 설치합니다 (열쇠 등록 같은 준비 없음 · 어느 폰에서나 같은 방법)
