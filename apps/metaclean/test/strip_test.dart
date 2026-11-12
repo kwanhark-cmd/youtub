@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 
+import 'package:exif/exif.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:image/image.dart' as img;
 import 'package:metaclean/src/exif_utils.dart';
@@ -113,6 +114,30 @@ void main() {
           contains('2026:11:10 14:30:00'));
       expect(back.exif.gpsIfd['GPSLatitudeRef'].toString(), contains('N'));
       expect(back.exif.gpsIfd['GPSLatitude']!.length, 3);
+    });
+
+    test('기록 날짜를 새기면 옛 촬영 시각(GPS 시각·초 아래 자리)이 남지 않는다', () async {
+      // 판매자가 원본 그대로 보낸 사진: 위치와 GPS 시각이 들어 있다
+      final im = img.Image(width: 8, height: 8);
+      im.exif.imageIfd['DateTime'] = '2026:11:12 14:30:00';
+      im.exif.exifIfd['DateTimeOriginal'] = '2026:11:12 14:30:00';
+      im.exif.exifIfd.data[0x9291] = img.IfdValueAscii('987');
+      writeGps(im.exif, 35.1796, 129.0756);
+      im.exif.gpsIfd.data[0x001D] = img.IfdValueAscii('2026:11:12');
+      im.exif.gpsIfd.data[0x0007] = img.IfdValueRational(5, 1);
+      final src = img.decodeJpg(Uint8List.fromList(img.encodeJpg(im)))!;
+
+      // 좌표를 적지 않고 기록 날짜만 새긴다
+      applyStamp(src, date: DateTime(2026, 12, 25, 10), itemName: 'x');
+      final out = Uint8List.fromList(img.encodeJpg(src, quality: 90));
+      final tags = await readExifFromBytes(out);
+      expect(tags['EXIF DateTimeOriginal']!.printable, '2026:12:25 10:00:00');
+      expect(tags.containsKey('GPS GPSDate'), isFalse);
+      expect(tags.containsKey('GPS GPSTimeStamp'), isFalse);
+      expect(tags.containsKey('EXIF SubSecTimeOriginal'), isFalse);
+      expect(String.fromCharCodes(out).contains('2026:11:12'), isFalse);
+      // 위치는 그대로 남는다 (날짜만 새로 적었으므로)
+      expect(tags.containsKey('GPS GPSLatitude'), isTrue);
     });
 
     test('파일 이름을 안전하게 만든다', () {

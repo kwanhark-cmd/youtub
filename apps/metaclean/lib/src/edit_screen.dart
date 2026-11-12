@@ -173,19 +173,15 @@ class _EditScreenState extends State<EditScreen> {
           item.error = '지원하지 않는 사진 형식';
           continue;
         }
-        // 파일 이름과 파일 시각도 사진 속 날짜와 맞춘다.
-        //  - 날짜를 바꿨으면: 바꾼 날짜로 이름을 짓고 파일 수정 시각도 그 날짜로
-        //  - 날짜를 지웠으면: 원본 이름에 든 옛 날짜도 뺀다
-        //  - 날짜를 그대로 뒀으면: 원본 이름 그대로
-        final base = baseName(f.name);
-        final stem = switch (_dateAction) {
-          DateAction.change => dateStem(_date),
-          DateAction.remove => scrubDateFromName(base),
-          DateAction.keep => base,
-        };
+        // 파일 이름도 사진 속 날짜와 맞춘다 (바꿨으면 바꾼 날짜로, 지웠으면 날짜 없이).
+        final stem = editStem(
+          dateAction: _dateAction,
+          date: _date,
+          originalName: f.name,
+          out: r.bytes,
+        );
         final out = uniquePathIn(runDir, stem, 'jpg');
         await File(out).writeAsBytes(r.bytes, flush: true);
-        if (_dateAction == DateAction.change) await setFileTime(out, _date);
         item.path = out;
 
         // 결과 확인: 실제로 들어간 값을 다시 읽어 보여 준다.

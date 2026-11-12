@@ -22,6 +22,10 @@ Uint8List _sampleJpeg() {
   im.exif.exifIfd['DateTimeDigitized'] = '2024:03:05 10:11:12';
   writeGps(im.exif, 35.1796, 129.0756); // 부산
   im.exif.gpsIfd.data[0x001D] = img.IfdValueAscii('2024:03:05');
+  im.exif.exifIfd.data[0x9291] = img.IfdValueAscii('987'); // SubSecTimeOriginal
+  // 제조사 전용 기록: 카메라에 따라 촬영 시각을 따로 적어 둔다
+  im.exif.exifIfd.data[0x927C] =
+      img.IfdValueUndefined.list('MAKERNOTE-TIME-101112'.codeUnits);
   final jpg = img.encodeJpg(im, quality: 90);
 
   // SOI 바로 뒤에 XMP APP1 조각 끼워 넣기 + 끝에 숨은 데이터
@@ -75,6 +79,8 @@ void main() {
     expect(_deg(tags['GPS GPSLatitude']!), closeTo(37.5665, 1e-4));
     expect(_deg(tags['GPS GPSLongitude']!), closeTo(126.978, 1e-4));
     expect(tags.containsKey('GPS GPSDate'), isFalse);
+    // 옛 촬영 순간의 초 아래 자리도 새 날짜 옆에 남지 않는다
+    expect(tags.containsKey('EXIF SubSecTimeOriginal'), isFalse);
 
     // 옛 날짜·XMP·숨은 꼬리 데이터가 남지 않는다
     expect(_has(r.bytes, '2024:03:05'), isFalse);
@@ -93,6 +99,8 @@ void main() {
     expect(tags.keys.where((k) => k.startsWith('GPS')), isEmpty);
     expect(tags['EXIF DateTimeOriginal']!.printable, '2024:03:05 10:11:12');
     expect(tags['Image Make']!.printable, 'SAMSUNG');
+    // 날짜를 건드리지 않았으니 제조사 전용 기록도 그대로다
+    expect(_has(r.bytes, 'MAKERNOTE-TIME-101112'), isTrue);
   });
 
   test('날짜만 바꾸면 위치는 그대로다', () async {
@@ -101,6 +109,10 @@ void main() {
     final tags = await readExifFromBytes(r.bytes);
     expect(tags['EXIF DateTimeOriginal']!.printable, '2025:01:02 03:04:05');
     expect(_deg(tags['GPS GPSLatitude']!), closeTo(35.1796, 1e-4));
+    // 촬영 시각이 숨어 있을 수 있는 제조사 전용 기록은 함께 지우고, 기기 이름은 남긴다
+    expect(_has(r.bytes, 'MAKERNOTE-TIME-101112'), isFalse);
+    expect(tags['Image Make']!.printable, 'SAMSUNG');
+    expect(tags['Image Model']!.printable, 'SM-S918N');
   });
 
   test('EXIF가 없는 PNG는 JPEG로 바꿔서 새긴다', () async {
@@ -125,6 +137,8 @@ void main() {
     expect(tags.containsKey('EXIF DateTimeDigitized'), isFalse);
     expect(tags.containsKey('GPS GPSDate'), isFalse);
     expect(_has(r.bytes, '2024:03:05'), isFalse);
+    expect(tags.containsKey('EXIF SubSecTimeOriginal'), isFalse);
+    expect(_has(r.bytes, 'MAKERNOTE-TIME-101112'), isFalse);
     // 위치·기기는 남아 있다
     expect(tags['Image Make']!.printable, 'SAMSUNG');
     expect(_deg(tags['GPS GPSLatitude']!), closeTo(35.1796, 1e-4));

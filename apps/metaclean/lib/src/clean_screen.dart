@@ -82,9 +82,9 @@ class _CleanScreenState extends State<CleanScreen> {
           ext = 'jpg';
           item.reEncoded = true;
         }
-        // 원본 이름에 든 촬영 날짜(예: 20261112_143000)도 지워서 이름을 짓는다.
-        final outPath =
-            uniquePathIn(runDir, scrubDateFromName(baseName(f.name)), ext);
+        // 원본 이름에는 촬영 날짜(예: 20261112_143000)나 기기 표시가 들어 있어
+        // 이름도 새로 짓는다.
+        final outPath = uniquePathIn(runDir, cleanStem(cleaned), ext);
         await File(outPath).writeAsBytes(cleaned, flush: true);
         item.cleanedPath = outPath;
 

@@ -51,6 +51,22 @@ String buildDescription({
   return parts.join(' | ');
 }
 
+/// 날짜를 새로 적을 때, 옛 촬영 시각이 따로 남는 칸을 지운다.
+///
+/// 초 아래 자리(SubSecTime)와 GPS 시각·날짜는 원래 촬영 순간의 값이라,
+/// 날짜만 새로 적으면 새 날짜 옆에 옛 시각이 그대로 남는다.
+void clearOldTimeTraces(img.ExifData exif) {
+  if (exif.imageIfd.sub.containsKey('exif')) {
+    for (final t in const [0x9290, 0x9291, 0x9292]) {
+      exif.exifIfd.data.remove(t); // SubSecTime 3종
+    }
+  }
+  if (exif.imageIfd.sub.containsKey('gps')) {
+    exif.gpsIfd.data.remove(0x0007); // GPSTimeStamp
+    exif.gpsIfd.data.remove(0x001D); // GPSDateStamp
+  }
+}
+
 /// 사진에 날짜·설명·좌표 메타데이터를 새긴다. GPS 기록 성공 여부를 돌려준다.
 bool applyStamp(
   img.Image image, {
@@ -68,6 +84,7 @@ bool applyStamp(
   exif.imageIfd['ImageDescription'] = desc;
   exif.exifIfd['DateTimeOriginal'] = d;
   exif.exifIfd['DateTimeDigitized'] = d;
+  clearOldTimeTraces(exif);
   var gpsOk = false;
   if (lat != null && lng != null) {
     try {

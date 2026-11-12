@@ -82,6 +82,14 @@ PhotoEditResult? editPhotoMeta(
     }
   }
 
+  // 제조사 전용 기록(MakerNote)은 속을 들여다볼 수 없고, 카메라에 따라 촬영 시각을
+  // 따로 적어 둔다. 날짜를 지우거나 바꿀 때는 함께 지운다.
+  void dropMakerNote(img.ExifData exif) {
+    if (exif.imageIfd.sub.containsKey('exif')) {
+      exif.exifIfd.data.remove(0x927C);
+    }
+  }
+
   void apply(img.ExifData exif) {
     switch (dateAction) {
       case DateAction.keep:
@@ -96,12 +104,14 @@ PhotoEditResult? editPhotoMeta(
           }
         }
         clearGpsTime(exif);
+        dropMakerNote(exif);
       case DateAction.change:
         final d = exifDate(date!);
         exif.imageIfd['DateTime'] = d;
         exif.exifIfd['DateTimeOriginal'] = d;
         exif.exifIfd['DateTimeDigitized'] = d;
-        clearGpsTime(exif);
+        clearOldTimeTraces(exif);
+        dropMakerNote(exif);
     }
     switch (gps) {
       case GpsAction.keep:

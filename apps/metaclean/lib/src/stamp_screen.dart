@@ -106,11 +106,10 @@ class _StampScreenState extends State<StampScreen> {
 
       final dir = await getApplicationDocumentsDirectory();
       final name = safeFileName(_itemCtrl.text);
-      // 이름과 파일 시각도 사진에 새긴 기록 날짜와 맞춘다.
+      // 이름도 사진에 새긴 기록 날짜와 맞춘다.
       final outPath = uniquePathIn(
           dir, '기록_${name}_${DateFormat('yyyyMMdd').format(_date)}', 'jpg');
       await File(outPath).writeAsBytes(out, flush: true);
-      await setFileTime(outPath, _date);
 
       try {
         await Gal.requestAccess();
