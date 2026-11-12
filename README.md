@@ -41,4 +41,5 @@ claude.ai 작업방을 주제별로 정리해 모아 두는 저장소입니다.
 - **문서**: PDF·한글(hwp·hwpx)·워드(docx·doc) 메타데이터 전부 삭제 또는 제목·작성자·만든 프로그램·날짜만 변경
 - **구매 기록**: 받은 사진에 날짜·물건·메모·장소를 새겨 보관
 - 사용설명서·기능설명서: [`docs/메타지우개플러스_사용법.md`](docs/메타지우개플러스_사용법.md)
-- 코드: `apps/metaclean` · 설치 파일: Actions → "메타지우개 플러스 검사와 빌드" → Artifacts
+- 코드: `apps/metaclean` · 설치 파일(늘 같은 주소): [Releases `metaclean-latest`](https://github.com/kwanhark-cmd/youtub/releases/tag/metaclean-latest)
+- 업데이트: 새 버전이 나오면 앱이 알려 주고, 기존 앱을 지우지 않고 그 위에 설치됩니다 (서명 열쇠를 Secrets `METACLEAN_KEYSTORE_BASE64` 에 한 번 등록해 둔 경우)

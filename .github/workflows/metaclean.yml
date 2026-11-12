@@ -36,6 +36,8 @@ jobs:
     needs: test
     runs-on: ubuntu-latest
     timeout-minutes: 45
+    outputs:
+      signed: ${{ steps.sign.outputs.signed }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
@@ -55,14 +57,116 @@ jobs:
         run: |
           M=android/app/src/main/AndroidManifest.xml
           sed -i 's/android:label="metaclean"/android:label="메타지우개 플러스"/' "$M"
-          sed -i '0,/<application/s//<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="28" \/>\n    <application/' "$M"
+          # INTERNET: 새 버전 확인에만 쓴다. WRITE_EXTERNAL_STORAGE: 옛 안드로이드(9 이하) 갤러리 저장용.
+          sed -i '0,/<application/s//<uses-permission android:name="android.permission.INTERNET" \/>\n    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="28" \/>\n    <application/' "$M"
           cat "$M"
+          grep -q 'android:label="메타지우개 플러스"' "$M"
+          grep -q 'android.permission.INTERNET' "$M"
       - name: APK 빌드
         working-directory: apps/metaclean
-        run: flutter build apk --release
+        env:
+          # 빌드 번호는 실행할 때마다 1씩 커진다. 안드로이드는 번호가 같거나 커야 덮어 설치해 준다.
+          BUILD: ${{ github.run_number }}
+        run: |
+          VER="$(sed -n -E 's/^version:[[:space:]]*([0-9][^+[:space:]]*).*/\1/p' pubspec.yaml | head -1)"
+          test -n "$VER"
+          echo "버전 $VER · 빌드 $BUILD"
+          flutter build apk --release --build-name="$VER" --build-number="$BUILD" \
+            --dart-define=APP_VERSION="$VER" --dart-define=APP_BUILD="$BUILD"
+          mkdir -p "$GITHUB_WORKSPACE/out"
+          jq -n --argjson build "$BUILD" --arg version "$VER" --rawfile notes update_notes.txt \
+            '{build: $build, version: $version, notes: $notes}' > "$GITHUB_WORKSPACE/out/version.json"
+          cat "$GITHUB_WORKSPACE/out/version.json"
+      - name: 서명 (고정 열쇠가 등록돼 있으면 그 열쇠로)
+        id: sign
+        env:
+          # 열쇠 파일은 저장소에 두지 않고 GitHub Secrets 에만 둔다.
+          # 열쇠 파일 자체가 비밀이라, 파일을 여는 암호는 고정값을 쓴다.
+          KEYSTORE_BASE64: ${{ secrets.METACLEAN_KEYSTORE_BASE64 }}
+        run: |
+          APK=apps/metaclean/build/app/outputs/flutter-apk/app-release.apk
+          OUT=out/metaclean-plus.apk
+          SDK="${ANDROID_HOME:-$ANDROID_SDK_ROOT}"
+          BT="$(ls -d "$SDK"/build-tools/*/ | sort -V | tail -1)"
+          KS="$RUNNER_TEMP/metaclean.p12"
+          signed=false
+          if [ -n "$KEYSTORE_BASE64" ]; then
+            printf '%s' "$KEYSTORE_BASE64" | tr -d '[:space:]' | base64 -d > "$KS" 2>/dev/null || true
+            if keytool -list -keystore "$KS" -storepass metaclean -alias metaclean >/dev/null 2>&1; then
+              "${BT}apksigner" sign --ks "$KS" --ks-pass pass:metaclean --ks-key-alias metaclean --out "$OUT" "$APK"
+              signed=true
+            else
+              echo "::warning::METACLEAN_KEYSTORE_BASE64 값을 열쇠로 읽지 못했어요. 값을 처음부터 끝까지 다시 붙여 넣어 주세요. 이번에는 시험용 열쇠로 서명합니다."
+            fi
+            rm -f "$KS"
+          else
+            echo "::warning::METACLEAN_KEYSTORE_BASE64 가 없어 시험용 열쇠로 서명합니다. 이 APK 는 기존 앱 위에 덮어 설치되지 않을 수 있고, 업데이트로 올라가지 않습니다."
+          fi
+          if [ "$signed" != true ]; then cp "$APK" "$OUT"; fi
+          echo "signed=$signed" >> "$GITHUB_OUTPUT"
+          # 서명한 열쇠의 지문(공개 정보). 빌드마다 같아야 덮어 설치가 된다.
+          "${BT}apksigner" verify --print-certs "$OUT" | grep 'certificate SHA-256'
       - name: APK 올리기
         uses: actions/upload-artifact@v4
         with:
           name: 메타지우개플러스-APK
-          path: apps/metaclean/build/app/outputs/flutter-apk/app-release.apk
+          path: out/
           if-no-files-found: error
+
+  release:
+    name: 업데이트로 올리기 (고정 열쇠로 서명됐을 때만)
+    needs: apk
+    if: needs.apk.outputs.signed == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    concurrency:
+      group: metaclean-release
+      cancel-in-progress: false
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: 메타지우개플러스-APK
+          path: out
+      - name: Releases 의 고정 주소에 올리기
+        working-directory: out
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          # 앱이 새 버전을 찾아보는 고정 주소. 개인비서의 "최신 Release" 와 섞이지 않게 prerelease 로 둔다.
+          TAG: metaclean-latest
+        run: |
+          NEW="$(jq -r .build version.json)"
+          VER="$(jq -r .version version.json)"
+          OLD=0
+          if gh release download "$TAG" -p version.json -O old.json 2>/dev/null; then
+            OLD="$(jq -r '.build // 0' old.json 2>/dev/null || echo 0)"
+            rm -f old.json
+          fi
+          case "$OLD" in ''|*[!0-9]*) OLD=0 ;; esac
+          if [ "$OLD" -ge "$NEW" ]; then
+            echo "이미 같거나 더 새 빌드($OLD)가 올라가 있어 건너뜁니다."
+            exit 0
+          fi
+          TITLE="메타지우개 플러스 $VER (빌드 $NEW)"
+          {
+            echo "## 달라진 점"
+            jq -r .notes version.json
+            echo
+            echo "## 설치·업데이트 방법"
+            echo "1. 아래 **metaclean-plus.apk** 를 눌러 내려받습니다."
+            echo "2. 내려받은 파일을 열고 **업데이트**(처음이면 **설치**)를 누릅니다."
+            echo
+            echo "기존 앱을 지우지 않아도 그 위에 바로 설치됩니다."
+          } > "$RUNNER_TEMP/notes.md"
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh api -X PATCH "repos/$GH_REPO/git/refs/tags/$TAG" -f sha="$GITHUB_SHA" -F force=true >/dev/null
+            # 설치 파일을 먼저, 안내 파일(version.json)을 나중에 올린다.
+            gh release upload "$TAG" metaclean-plus.apk --clobber
+            gh release upload "$TAG" version.json --clobber
+            gh release edit "$TAG" --title "$TITLE" --notes-file "$RUNNER_TEMP/notes.md" --prerelease
+          else
+            gh release create "$TAG" metaclean-plus.apk version.json --target "$GITHUB_SHA" \
+              --prerelease --title "$TITLE" --notes-file "$RUNNER_TEMP/notes.md"
+          fi

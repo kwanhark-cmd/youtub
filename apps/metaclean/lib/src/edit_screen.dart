@@ -8,13 +8,17 @@ import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 
+import 'device_info.dart';
 import 'out_name.dart';
 import 'photo_edit.dart';
 import 'plus_code.dart';
 
 /// 사진의 날짜·위치만 골라서 고친다. 나머지 정보는 그대로 둔다.
 class EditScreen extends StatefulWidget {
-  const EditScreen({super.key});
+  const EditScreen({super.key, this.deviceLookup = currentDeviceName});
+
+  /// 지금 쓰는 폰의 제조사·기종을 알아내는 방법 (테스트에서 바꿔 끼움).
+  final DeviceLookup deviceLookup;
 
   @override
   State<EditScreen> createState() => _EditScreenState();
@@ -76,6 +80,31 @@ class _EditScreenState extends State<EditScreen> {
 
   void _say(String msg) {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+  }
+
+  /// 제조사·기종 칸을 지금 이 폰의 정보로 채운다.
+  /// [asked]는 사용자가 버튼을 직접 눌렀을 때 참이고, 그때만 실패를 알린다.
+  Future<void> _fillThisPhone({required bool asked}) async {
+    final d = await widget.deviceLookup();
+    if (!mounted) return;
+    if (d == null) {
+      if (asked) _say('이 폰의 기종을 읽지 못했어요. 직접 적어 주세요.');
+      return;
+    }
+    setState(() {
+      _makeCtrl.text = d.make;
+      _modelCtrl.text = d.model;
+    });
+  }
+
+  void _onDeviceAction(DeviceAction a) {
+    setState(() => _device = a);
+    // 바꾸기를 처음 골랐고 칸이 비어 있으면, 이 폰 정보를 미리 넣어 준다.
+    if (a == DeviceAction.change &&
+        _makeCtrl.text.trim().isEmpty &&
+        _modelCtrl.text.trim().isEmpty) {
+      _fillThisPhone(asked: false);
+    }
   }
 
   List<String> get _tags => _tagCtrl.text
@@ -165,12 +194,15 @@ class _EditScreenState extends State<EditScreen> {
           tags['Image Make']?.printable,
           tags['Image Model']?.printable,
         ].whereType<String>().join(' ').trim();
+        // "그대로"를 골랐는데 결과에 없으면, 원본에 처음부터 없던 것이다
+        // (이미 전부 지운 사진 등). 헷갈리지 않게 그렇게 적어 준다.
+        String missing(bool kept) => kept ? '없음(원본에도 없음)' : '없음';
+        final takenAt = tags['EXIF DateTimeOriginal']?.printable;
+        final hasGps = tags.keys.any((k) => k.startsWith('GPS GPSLatitude'));
         final parts = <String>[
-          '촬영일 ${tags['EXIF DateTimeOriginal']?.printable ?? '없음'}',
-          tags.keys.any((k) => k.startsWith('GPS GPSLatitude'))
-              ? '위치 있음'
-              : '위치 없음',
-          '기기 ${deviceName.isEmpty ? '정보 없음' : deviceName}',
+          '촬영일 ${takenAt ?? missing(_dateAction == DateAction.keep)}',
+          '위치 ${hasGps ? '있음' : missing(_gps == GpsAction.keep)}',
+          '기기 ${deviceName.isEmpty ? missing(_device == DeviceAction.keep) : deviceName}',
           if (r.reEncoded) 'JPEG로 변환됨',
         ];
         item.summary = parts.join(' · ');
@@ -306,7 +338,7 @@ class _EditScreenState extends State<EditScreen> {
                         value: DeviceAction.change, label: Text('바꾸기')),
                   ],
                   selected: {_device},
-                  onSelectionChanged: (s) => setState(() => _device = s.first),
+                  onSelectionChanged: (s) => _onDeviceAction(s.first),
                 ),
                 if (_device == DeviceAction.change) ...[
                   const SizedBox(height: 10),
@@ -335,10 +367,17 @@ class _EditScreenState extends State<EditScreen> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 6),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: TextButton.icon(
+                      onPressed: () => _fillThisPhone(asked: true),
+                      icon: const Icon(Icons.smartphone),
+                      label: const Text('이 폰 정보로 채우기'),
+                    ),
+                  ),
                   const Text(
-                    '필름 카메라로 찍어 스캔한 사진이면 그 카메라 이름(예: Canon AE-1, '
-                    'Nikon FM2)을 적을 수 있어요. 비워 두면 기기 정보 없이 저장됩니다.',
+                    '지금 쓰는 폰의 제조사·기종이 자동으로 들어가요. 다른 기기로 적고 싶으면 '
+                    '고쳐 쓰면 됩니다. (필름 카메라로 찍어 스캔한 사진이면 예: Canon AE-1)',
                     style: TextStyle(fontSize: 12),
                   ),
                 ],
