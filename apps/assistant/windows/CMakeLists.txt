@@ -53,6 +53,11 @@ add_subdirectory(${FLUTTER_MANAGED_DIR})
 add_subdirectory("runner")
 
 
+# local_auth_windows 플러그인은 아직 옛 코루틴 헤더(<experimental/coroutine>,
+# /await)를 쓴다. 새 Visual Studio(MSVC 14.5x)는 이를 빌드 오류(STL1011)로
+# 막으므로, 플러그인이 새 헤더로 옮겨 갈 때까지 MSVC 가 안내한 대로 끈다.
+add_compile_definitions(_SILENCE_EXPERIMENTAL_COROUTINE_DEPRECATION_WARNINGS)
+
 # Generated plugin build rules, which manage building the plugins and adding
 # them to the application.
 include(flutter/generated_plugins.cmake)
