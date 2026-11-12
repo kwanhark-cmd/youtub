@@ -11,6 +11,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 
 import 'exif_utils.dart';
+import 'out_name.dart';
 
 /// 구매용: 받은 사진에 날짜·물건·메모·위치 메타데이터를 기록해 보관한다.
 class StampScreen extends StatefulWidget {
@@ -105,9 +106,11 @@ class _StampScreenState extends State<StampScreen> {
 
       final dir = await getApplicationDocumentsDirectory();
       final name = safeFileName(_itemCtrl.text);
-      final stampTag = DateFormat('yyyyMMdd_HHmmss').format(DateTime.now());
-      final outPath = '${dir.path}/기록_${name}_$stampTag.jpg';
+      // 이름과 파일 시각도 사진에 새긴 기록 날짜와 맞춘다.
+      final outPath = uniquePathIn(
+          dir, '기록_${name}_${DateFormat('yyyyMMdd').format(_date)}', 'jpg');
       await File(outPath).writeAsBytes(out, flush: true);
+      await setFileTime(outPath, _date);
 
       try {
         await Gal.requestAccess();

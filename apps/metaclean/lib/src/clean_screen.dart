@@ -9,6 +9,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 
+import 'out_name.dart';
 import 'strip.dart';
 
 /// 판매용: 사진의 메타데이터를 지워 깨끗한 사본을 만들고 공유한다.
@@ -44,7 +45,7 @@ class _CleanScreenState extends State<CleanScreen> {
       _busy = true;
       _items.clear();
     });
-    final tmp = await getTemporaryDirectory();
+    final runDir = await freshRunDir(await getTemporaryDirectory(), 'clean_');
     for (final f in files) {
       final item = _Item(f.name);
       _items.add(item);
@@ -81,9 +82,9 @@ class _CleanScreenState extends State<CleanScreen> {
           ext = 'jpg';
           item.reEncoded = true;
         }
-        final base = f.name.replaceAll(RegExp(r'\.[^.]+$'), '');
+        // 원본 이름에 든 촬영 날짜(예: 20261112_143000)도 지워서 이름을 짓는다.
         final outPath =
-            '${tmp.path}/클린_${base}_${DateTime.now().millisecondsSinceEpoch}.$ext';
+            uniquePathIn(runDir, scrubDateFromName(baseName(f.name)), ext);
         await File(outPath).writeAsBytes(cleaned, flush: true);
         item.cleanedPath = outPath;
 
