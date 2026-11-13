@@ -11,7 +11,7 @@
 | `packages/declutter` | 4번 집안 물건 비우기 (`binugi`) | Flutter 패키지 그대로 |
 | `packages/vault` | 5번 계정·구독 금고 (`account_vault`) | Flutter 패키지 그대로, 암호화 방식 변경 없음 |
 | `packages/core` | 새로 | 로그인·테마·음성 라우터·설정·로그·업데이트·모듈 연결 규격 |
-| `apps/assistant` | 새로 | 본체 앱 "개인비서" (식별자 `com.kwanhark.personalassistant`) |
+| `apps/assistant` | 새로 | 본체 앱 "개인비서" (식별자 `com.kwanhark.personal_assistant`) |
 
 ## 단계 (가치 순서)
 1. 뼈대: 모노레포(pub workspace), core, 통합 홈(타일 5개, 누르면 각 모듈 로드), 하드 웹뷰, GitHub Actions
