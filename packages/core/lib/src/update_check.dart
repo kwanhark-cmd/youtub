@@ -18,7 +18,8 @@ class UpdateInfo {
   final Map<String, String> sha256;
 }
 
-/// 업데이트 확인: 사용자가 누를 때만 GitHub Releases를 본다. 내려받은 파일은 해시를 확인한다.
+/// 업데이트 확인: 사용자가 누를 때만 GitHub Releases를 본다. 앱은 내려받거나 설치하지 않고,
+/// 사용자가 공개 페이지에서 직접 받는다. [verify]는 받은 파일을 직접 확인할 때 쓰는 도구.
 class UpdateChecker {
   UpdateChecker({required this.repo, required this.currentVersion, http.Client? client}) : _c = client ?? http.Client();
   final String repo;

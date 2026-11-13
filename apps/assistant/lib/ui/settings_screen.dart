@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:assistant_core/assistant_core.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:path/path.dart' as p;
@@ -44,7 +45,7 @@ class SettingsScreen extends StatelessWidget {
                 key: const Key('settings-update'),
                 leading: const Icon3d('sparkles', size: 36),
                 title: const Text('업데이트 확인'),
-                subtitle: const Text('누를 때만 새 버전을 찾아요. 내 자료는 그대로예요.'),
+                subtitle: const Text('누를 때만 새 버전을 찾아요. 앱이 스스로 설치하지는 않아요.'),
                 onTap: () => _checkUpdate(context),
               ),
               ListTile(
@@ -162,19 +163,22 @@ class SettingsScreen extends StatelessWidget {
 
   Future<void> _checkUpdate(BuildContext context) async {
     try {
-      final info = await UpdateChecker(repo: releaseRepo, currentVersion: appVersion).check();
+      final info = await state.updateChecker().check();
       if (!context.mounted) return;
       if (info == null) return say(context, '지금이 최신 버전이에요.');
+      final android = defaultTargetPlatform == TargetPlatform.android;
       await showDialog<void>(
         context: context,
         builder: (d) => AlertDialog(
+          scrollable: true,
           title: Text('새 버전 ${info.version}'),
-          content: const Text('Releases 페이지에서 내 기기에 맞는 파일을 받아 덮어 설치하면 돼요. 내 자료는 사용자 폴더에 있어 그대로 남아요.'),
+          content: Text(updateSteps(android: android), key: const Key('update-steps')),
           actions: [
             TextButton(onPressed: () => Navigator.pop(d), child: const Text('나중에')),
             FilledButton(
-              onPressed: () => launchUrl(Uri.parse('https://github.com/$releaseRepo/releases/latest'), mode: LaunchMode.externalApplication),
-              child: const Text('받으러 가기'),
+              key: const Key('update-open'),
+              onPressed: () => launchUrl(Uri.parse(updateDownloadUrl(info, android: android)), mode: LaunchMode.externalApplication),
+              child: Text(android ? '설치 파일 받기' : '받으러 가기'),
             ),
           ],
         ),
@@ -185,6 +189,25 @@ class SettingsScreen extends StatelessWidget {
     }
   }
 }
+
+/// "받기" 단추가 여는 주소: 안드로이드는 설치 파일(.apk)을 바로, 없거나 다른 기기는 공개 내려받기 페이지.
+/// 앱이 직접 설치하지는 않는다 (브라우저가 받고, 사용자가 순서대로 설치).
+String updateDownloadUrl(UpdateInfo info, {required bool android}) => android ? info.assets[androidAsset] ?? releasePage : releasePage;
+
+/// 새 버전으로 바꾸는 순서 (업데이트 창에 보이는 글).
+/// 안드로이드는 기존 앱을 지워야 새 파일이 설치되고, 지우면 앱 안 자료도 함께 지워진다.
+/// 그래서 "앱 밖에 백업 파일 저장"이 언제나 첫 번째다.
+String updateSteps({required bool android}) => android
+    ? '안드로이드는 기존 앱 위에 덮어 설치가 안 돼요. 기존 앱을 지우면 앱 안 자료도 함께 지워지니 꼭 이 순서대로 해 주세요.\n\n'
+        '① 먼저 백업: 금고·대화·비우기·채널 모듈의 설정에서 각각 "백업 파일 만들기"를 눌러, 백업 파일을 앱 밖(다운로드 폴더·구글 드라이브·내 메일 등)에 저장해요. 백업 비밀번호도 적어 두세요.\n'
+        '② 아래 "설치 파일 받기"로 새 설치 파일을 받아요.\n'
+        '③ 기존 개인비서 앱을 지워요. (로그인·열쇠·하드 연결 번호도 함께 지워져요)\n'
+        '④ 받은 설치 파일을 눌러 설치해요.\n'
+        '⑤ 새로 로그인한 뒤, 각 모듈 설정의 "백업에서 되살리기"(금고는 "백업 파일 불러오기")로 자료를 되살려요. 구글 JSON·AI 열쇠·하드 연결 번호는 다시 넣어 주세요.'
+    : '공개 내려받기 페이지(Releases)에서 내 기기에 맞는 새 파일을 받아요.\n\n'
+        '• 윈도우·리눅스: 압축을 풀어 기존 앱 폴더를 새 폴더로 바꿔요.\n'
+        '• 맥: 응용 프로그램 폴더의 개인비서를 새 앱으로 바꿔요.\n\n'
+        '내 자료는 앱 폴더가 아니라 사용자 폴더에 있어서 그대로 남아요. 바꾸기 전에 각 모듈에서 백업 파일을 만들어 두면 더 안심이에요.';
 
 /// 문제 신고: 최근 기록(비밀 값 가림)을 사용자 문서 폴더에 파일로 만든다.
 Future<void> reportProblem(BuildContext context, AssistantState state) async {

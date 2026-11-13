@@ -6,8 +6,15 @@ import 'package:path/path.dart' as p;
 
 import '../modules/registry.dart';
 
+/// pubspec.yaml 의 version 과 같아야 한다 (test/version_test.dart 가 확인).
 const appVersion = '1.0.0';
 const releaseRepo = 'kwanhark-cmd/youtub';
+
+/// 공개 내려받기 페이지 (로그인 없이 열림).
+const releasePage = 'https://github.com/$releaseRepo/releases/latest';
+
+/// Releases 에 올리는 안드로이드 설치 파일 이름 (.github/workflows/build.yml 과 같음).
+const androidAsset = 'gaein-biseo-android.apk';
 
 /// 본체 앱 전체 상태: 설정 하나, 로그인 하나, 모듈 다섯, 제안함 하나.
 class AssistantState extends ChangeNotifier {
@@ -28,6 +35,9 @@ class AssistantState extends ChangeNotifier {
   late final LinkHub links;
   late final ModuleRegistry modules;
   final router = VoiceRouter();
+
+  /// 업데이트 확인기 (시험에서는 가짜 인터넷을 넣은 것으로 바꾼다).
+  UpdateChecker Function() updateChecker = () => UpdateChecker(repo: releaseRepo, currentVersion: appVersion);
 
   AssistantUser? user;
 
