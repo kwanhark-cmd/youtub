@@ -2,6 +2,7 @@ import 'dart:typed_data';
 
 import 'package:image/image.dart' as img;
 
+import 'exif_repair.dart';
 import 'exif_utils.dart';
 import 'photo_gps.dart';
 import 'photo_xmp.dart';
@@ -169,14 +170,15 @@ PhotoEditResult? editPhotoMeta(
     final out = img.injectJpgExif(base.bytes, exif);
     if (out == null) return null;
     return PhotoEditResult(
-        bytes: withXmp(out), reEncoded: false, sourceGps: sourceGps);
+        bytes: withXmp(repairJpegExif(out)), reEncoded: false, sourceGps: sourceGps);
   }
 
   final decoded = img.decodeImage(src);
   if (decoded == null) return null;
   apply(decoded.exif);
   return PhotoEditResult(
-    bytes: withXmp(Uint8List.fromList(img.encodeJpg(decoded, quality: 95))),
+    bytes: withXmp(
+        repairJpegExif(Uint8List.fromList(img.encodeJpg(decoded, quality: 95)))),
     reEncoded: true,
     sourceGps: sourceGps,
   );

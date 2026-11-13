@@ -9,6 +9,7 @@ import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 
+import 'exif_repair.dart';
 import 'exif_utils.dart';
 import 'out_name.dart';
 import 'photo_gps.dart';
@@ -126,7 +127,8 @@ class _StampScreenState extends State<StampScreen> {
         lat: lat,
         lng: lng,
       );
-      final out = Uint8List.fromList(img.encodeJpg(decoded, quality: 95));
+      final out = repairJpegExif(
+          Uint8List.fromList(img.encodeJpg(decoded, quality: 95)));
 
       final dir = await getApplicationDocumentsDirectory();
       final name = safeFileName(_itemCtrl.text);
