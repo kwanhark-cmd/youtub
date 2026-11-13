@@ -4,10 +4,6 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
 }
 
-// 안드로이드 서명 열쇠: GitHub Secrets 가 있으면 그것으로, 없으면 시험용(debug) 서명
-val releaseKeystore: String? = System.getenv("ANDROID_KEYSTORE_PATH")
-val hasReleaseKey = releaseKeystore != null && file(releaseKeystore).exists()
-
 android {
     namespace = "com.kwanhark.personal_assistant"
     // 웹뷰 등 일부 부품이 SDK 37 이상을 요구
@@ -35,20 +31,11 @@ android {
         versionName = flutter.versionName
     }
 
-    signingConfigs {
-        if (hasReleaseKey) {
-            create("release") {
-                storeFile = file(releaseKeystore!!)
-                storePassword = System.getenv("ANDROID_KEYSTORE_PASSWORD")
-                keyAlias = System.getenv("ANDROID_KEY_ALIAS")
-                keyPassword = System.getenv("ANDROID_KEY_PASSWORD")
-            }
-        }
-    }
-
     buildTypes {
         release {
-            signingConfig = if (hasReleaseKey) signingConfigs.getByName("release") else signingConfigs.getByName("debug")
+            // 서명 열쇠를 따로 두지 않는다: 빌드마다 그 컴퓨터의 임시(debug) 열쇠로 서명한다.
+            // 그래서 새 버전은 덮어 설치가 안 되고 "앱 밖에 백업 → 기존 앱 지우기 → 설치 → 되살리기" 순서다.
+            signingConfig = signingConfigs.getByName("debug")
         }
     }
 }

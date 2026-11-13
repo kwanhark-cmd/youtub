@@ -107,23 +107,13 @@ jobs:
           flutter-version: ${{ env.FLUTTER_VERSION }}
           channel: stable
           cache: true
-      - name: 서명 열쇠 (GitHub Secrets 가 있을 때만)
-        env:
-          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
-        run: |
-          if [ -n "$KEYSTORE_BASE64" ]; then
-            echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/release.jks"
-            echo "ANDROID_KEYSTORE_PATH=$RUNNER_TEMP/release.jks" >> "$GITHUB_ENV"
-          else
-            echo "::warning::ANDROID_KEYSTORE_BASE64 가 없어 시험용 열쇠로 서명합니다 (다음 버전 덮어쓰기 설치가 안 될 수 있어요)."
-          fi
       - run: flutter pub get
-      - working-directory: apps/assistant
-        env:
-          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
-          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
-        run: flutter build apk --release
+      # 서명 열쇠는 쓰지 않는다 (빌드마다 임시 열쇠). 그래서 새 버전은 "기존 앱 지우고 설치"이고,
+      # 그 전에 앱 밖에 백업 파일을 저장하라는 안내가 Releases 설명 맨 위에 들어간다.
+      # 내려받기가 가끔 끊겨 실패하면 30초 뒤 한 번만 다시 한다.
+      - name: 안드로이드 설치 파일 만들기
+        working-directory: apps/assistant
+        run: flutter build apk --release || (echo "한 번 더 시도합니다" && sleep 30 && flutter build apk --release)
       - run: cp apps/assistant/build/app/outputs/flutter-apk/app-release.apk gaein-biseo-android.apk
       - uses: actions/upload-artifact@v4
         with:
@@ -189,10 +179,23 @@ jobs:
         with:
           path: out
           merge-multiple: true
-      - name: 변경 내역 + 해시
+      - name: 설치 안내 + 변경 내역 + 해시
+        # 설치 안내가 맨 위: 이미 설치된 앱의 업데이트 창과 Releases 첫 화면에 먼저 보이는 곳.
         run: |
-          awk -v v="## $V" '$0==v{f=1;next} /^## /{f=0} f' CHANGELOG.md > notes.md
-          printf "\n**설치**: 받은 파일로 덮어쓰기 설치하면 내 자료는 그대로예요. 앱 설정 → 업데이트 확인으로도 찾을 수 있어요.\n\n**SHA256** (앱이 내려받은 파일을 이 값으로 확인해요)\n\`\`\`\n" >> notes.md
+          cat > notes.md <<'NOTES'
+          **안드로이드 (gaein-biseo-android.apk)** — 기존 앱 위에 덮어 설치가 안 돼요. 기존 앱을 지우면 앱 안 자료도 함께 지워지니 꼭 이 순서대로 해 주세요.
+          1. **먼저 백업**: 금고·대화·비우기·채널 모듈의 설정에서 각각 "백업 파일 만들기"를 눌러, 백업 파일을 앱 밖(다운로드 폴더·구글 드라이브·내 메일 등)에 저장해요. 백업 비밀번호도 적어 두세요.
+          2. 아래 **gaein-biseo-android.apk** 를 받아요.
+          3. 기존 개인비서 앱을 지워요. (로그인·열쇠·하드 연결 번호도 함께 지워져요)
+          4. 받은 파일을 눌러 설치해요.
+          5. 새로 로그인한 뒤, 각 모듈 설정의 "백업에서 되살리기"(금고는 "백업 파일 불러오기")로 자료를 되살려요. 구글 JSON·AI 열쇠·하드 연결 번호는 다시 넣어 주세요.
+
+          **윈도우·맥·리눅스** — 새 파일을 받아 기존 앱을 새 것으로 바꿔요 (윈도우·리눅스는 압축을 풀어 기존 폴더를 바꾸고, 맥은 응용 프로그램 폴더의 앱을 바꿔요). 내 자료는 사용자 폴더에 있어 그대로 남아요.
+          맥에서 처음 열 때 "열 수 없음" 안내가 나오면: 시스템 설정 → 개인정보 보호 및 보안 → 아래쪽 "그래도 열기".
+
+          NOTES
+          awk -v v="## $V" '$0==v{f=1;next} /^## /{f=0} f' CHANGELOG.md >> notes.md
+          printf "\n**SHA256** (받은 파일이 맞는지 직접 확인할 때)\n\`\`\`\n" >> notes.md
           (cd out && sha256sum *) >> notes.md
           printf '```\n' >> notes.md
           cat notes.md
