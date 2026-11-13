@@ -16,6 +16,7 @@ String moduleIcon(ModuleId m) => switch (m) {
       ModuleId.harddisk => 'folder',
       ModuleId.declutter => 'package',
       ModuleId.vault => 'lock',
+      ModuleId.metaclean => 'camera',
     };
 
 /// 채워진 카드 + 그림자 (테두리만 있는 상자 금지)

@@ -52,6 +52,15 @@ void main() {
       expect(r.route('이번 주 조회수').needsConfirm, isFalse);
     });
     test('모르는 말', () => expect(r.route('날씨 어때').intent, 'unknown'));
+    test('메타지우개: 메타데이터·위치 정보 이야기는 메타지우개 플러스로', () {
+      expect(r.route('메타지우개 열어 줘').module, ModuleId.metaclean);
+      expect(r.route('사진 메타데이터 보여줘').module, ModuleId.metaclean);
+      final x = r.route('사진 위치 정보 지워 줘');
+      expect(x.module, ModuleId.metaclean);
+      expect(x.needsConfirm, isTrue);
+      // 원래 다섯 모듈 예시는 그대로
+      expect(r.route('2005년 아이들 영상').module, ModuleId.harddisk);
+    });
   });
 
   test('비밀 값 가리기', () {

@@ -12,7 +12,7 @@ import 'suggestions_screen.dart';
 import 'voice_sheet.dart';
 import 'widgets.dart';
 
-/// 하나의 홈: 마스코트 인사 + 오늘 할 일 + 검색창 + 모듈 타일 다섯.
+/// 하나의 홈: 마스코트 인사 + 오늘 할 일 + 검색창 + 모듈 타일 여섯.
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key, required this.state});
   final AssistantState state;

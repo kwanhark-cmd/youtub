@@ -1,7 +1,7 @@
 name: personal_assistant
-description: "개인비서 — 채널·대화·하드·비우기·금고를 하나로"
+description: "개인비서 — 채널·대화·하드·비우기·금고·메타지우개를 하나로"
 publish_to: none
-version: 1.0.0+1
+version: 1.1.0+2
 resolution: workspace
 environment:
   sdk: ^3.13.0
@@ -20,6 +20,8 @@ dependencies:
     path: ../../packages/declutter
   account_vault:
     path: ../../packages/vault
+  metaclean:
+    path: ../metaclean
   path_provider: 2.1.6
   path: 1.9.1
   http: 1.6.0

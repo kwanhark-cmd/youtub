@@ -1,9 +1,9 @@
 import 'module_api.dart';
 import 'redact.dart';
 
-/// 아침 브리핑: 다섯 모듈의 오늘 할 일을 한 번에 읽을 말로.
+/// 아침 브리핑: 모든 모듈의 오늘 할 일을 한 번에 읽을 말로.
 class Briefing {
-  static const order = [ModuleId.channel, ModuleId.vault, ModuleId.harddisk, ModuleId.declutter, ModuleId.chats];
+  static const order = [ModuleId.channel, ModuleId.vault, ModuleId.harddisk, ModuleId.declutter, ModuleId.chats, ModuleId.metaclean];
 
   static String compose(Map<ModuleId, List<TodayItem>> items, {String userName = '', DateTime? now}) {
     final t = now ?? DateTime.now();

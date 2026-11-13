@@ -23,6 +23,7 @@ class LegacyApp {
         ModuleId.declutter => 'binugi',
         ModuleId.vault => 'vault_app',
         ModuleId.harddisk => '',
+        ModuleId.metaclean => '', // 따로 저장해 두는 자료가 없어 가져올 것이 없다
       };
 }
 

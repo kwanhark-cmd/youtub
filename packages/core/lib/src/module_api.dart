@@ -2,8 +2,8 @@ import 'package:flutter/widgets.dart';
 
 import 'links.dart';
 
-/// 다섯 모듈.
-enum ModuleId { channel, chats, harddisk, declutter, vault }
+/// 여섯 모듈 (다섯 앱 + 메타지우개 플러스).
+enum ModuleId { channel, chats, harddisk, declutter, vault, metaclean }
 
 extension ModuleIdName on ModuleId {
   /// 화면에 보이는 이름
@@ -13,15 +13,17 @@ extension ModuleIdName on ModuleId {
         ModuleId.harddisk => '하드 자료 찾기',
         ModuleId.declutter => '물건 비우기',
         ModuleId.vault => '계정·구독 금고',
+        ModuleId.metaclean => '메타지우개 플러스',
       };
 
-  /// 모듈 색 면 (채널=파랑, 대화=보라, 하드=주황, 비우기=초록, 금고=분홍)
+  /// 모듈 색 면 (채널=파랑, 대화=보라, 하드=주황, 비우기=초록, 금고=분홍, 메타지우개=청록)
   Color get color => switch (this) {
         ModuleId.channel => const Color(0xFF2F6BFF),
         ModuleId.chats => const Color(0xFF7B4DFF),
         ModuleId.harddisk => const Color(0xFFFF8A1F),
         ModuleId.declutter => const Color(0xFF1FA463),
         ModuleId.vault => const Color(0xFFE5488A),
+        ModuleId.metaclean => const Color(0xFF0E8F9E),
       };
 
   String get emoji => switch (this) {
@@ -30,6 +32,7 @@ extension ModuleIdName on ModuleId {
         ModuleId.harddisk => '🗄️',
         ModuleId.declutter => '📦',
         ModuleId.vault => '🔐',
+        ModuleId.metaclean => '🧹',
       };
 }
 

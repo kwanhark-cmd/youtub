@@ -20,7 +20,7 @@ class RouteResult {
   bool get isAmbiguous => module == null && alternatives.length >= 2;
 }
 
-/// 마이크 하나로 다섯 모듈 명령을 알아듣는 규칙 기반 라우터 (인터넷·AI 없이 동작).
+/// 마이크 하나로 여섯 모듈 명령을 알아듣는 규칙 기반 라우터 (인터넷·AI 없이 동작).
 class VoiceRouter {
   static const Map<ModuleId, Map<String, int>> _words = {
     ModuleId.channel: {
@@ -42,6 +42,10 @@ class VoiceRouter {
     ModuleId.vault: {
       '구독': 5, '결제': 4, '만료': 4, '끝나': 4, '크레딧': 5, '비밀번호': 4, '계정': 4, '해지': 4, '요금': 4,
       '힉스필드': 5, '넷플릭스': 4, '체험판': 4, '금고': 5, '로그인': 2, '구독료': 6,
+    },
+    ModuleId.metaclean: {
+      '메타데이터': 6, '메타지우개': 7, '메타 지우개': 7, '위치 정보': 5, '위치정보': 5, 'gps': 4, 'exif': 5,
+      '촬영 정보': 4, '촬영 날짜': 4, '구매 기록': 5, '개인정보': 3,
     },
   };
 
