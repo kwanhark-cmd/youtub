@@ -7,7 +7,7 @@ import 'package:path/path.dart' as p;
 import '../modules/registry.dart';
 
 /// pubspec.yaml 의 version 과 같아야 한다 (test/version_test.dart 가 확인).
-const appVersion = '1.1.0';
+const appVersion = '1.1.1';
 const releaseRepo = 'kwanhark-cmd/youtub';
 
 /// 공개 내려받기 페이지 (로그인 없이 열림).

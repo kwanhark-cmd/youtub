@@ -3,7 +3,6 @@ import 'dart:io';
 import 'package:exif/exif.dart';
 import 'package:flutter/material.dart';
 import 'package:gal/gal.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
@@ -11,14 +10,27 @@ import 'package:share_plus/share_plus.dart';
 import 'device_info.dart';
 import 'out_name.dart';
 import 'photo_edit.dart';
+import 'photo_gps.dart';
+import 'photo_pick.dart';
 import 'plus_code.dart';
 
 /// 사진의 날짜·위치만 골라서 고친다. 나머지 정보는 그대로 둔다.
 class EditScreen extends StatefulWidget {
-  const EditScreen({super.key, this.deviceLookup = currentDeviceName});
+  const EditScreen({
+    super.key,
+    this.deviceLookup = currentDeviceName,
+    this.pickPhotos = pickOriginalPhotos,
+    this.mediaLocation = const MediaLocationAccess(),
+    this.tempDir = getTemporaryDirectory,
+  });
 
   /// 지금 쓰는 폰의 제조사·기종을 알아내는 방법 (테스트에서 바꿔 끼움).
   final DeviceLookup deviceLookup;
+
+  /// 사진을 고르는 방법·위치 권한·임시 폴더 (테스트에서 바꿔 끼움).
+  final PickPhotos pickPhotos;
+  final MediaLocationAccess mediaLocation;
+  final Future<Directory> Function() tempDir;
 
   @override
   State<EditScreen> createState() => _EditScreenState();
@@ -30,10 +42,12 @@ class _Done {
   String? path;
   String? summary;
   String? error;
+
+  /// 폰이 위치를 가린 채 넘겨줘서 "그대로"를 지키지 못했는지.
+  bool gpsHidden = false;
 }
 
 class _EditScreenState extends State<EditScreen> {
-  final _picker = ImagePicker();
   final _locCtrl = TextEditingController();
   final _makeCtrl = TextEditingController();
   final _modelCtrl = TextEditingController();
@@ -146,18 +160,20 @@ class _EditScreenState extends State<EditScreen> {
       lat = parsed.lat;
       lng = parsed.lng;
     }
-    final files = await _picker.pickMultiImage();
-    if (files.isEmpty) return;
+    await askMediaLocationOnce(context, widget.mediaLocation);
+    if (!mounted) return;
+    final files = await widget.pickPhotos(multiple: true);
+    if (files.isEmpty || !mounted) return;
     setState(() {
       _busy = true;
       _items.clear();
     });
-    final runDir = await freshRunDir(await getTemporaryDirectory(), 'edit_');
+    final runDir = await freshRunDir(await widget.tempDir(), 'edit_');
     for (final f in files) {
       final item = _Done(f.name);
       _items.add(item);
       try {
-        final src = await f.readAsBytes();
+        final src = await f.read();
         final r = editPhotoMeta(
           src,
           dateAction: _dateAction,
@@ -197,10 +213,18 @@ class _EditScreenState extends State<EditScreen> {
         // (이미 전부 지운 사진 등). 헷갈리지 않게 그렇게 적어 준다.
         String missing(bool kept) => kept ? '없음(원본에도 없음)' : '없음';
         final takenAt = tags['EXIF DateTimeOriginal']?.printable;
-        final hasGps = tags.keys.any((k) => k.startsWith('GPS GPSLatitude'));
+        final hasGps = gpsStateOfBytes(r.bytes) == GpsState.valid;
+        // 폰이 위치를 가린 채 넘겨준 사진: "원본에도 없음"이 아니다.
+        item.gpsHidden =
+            _gps == GpsAction.keep && r.sourceGps == GpsState.blank;
+        final gpsText = hasGps
+            ? '있음'
+            : item.gpsHidden
+                ? '없음(폰이 위치를 가린 채 넘겨줌)'
+                : missing(_gps == GpsAction.keep);
         final parts = <String>[
           '촬영일 ${takenAt ?? missing(_dateAction == DateAction.keep)}',
-          '위치 ${hasGps ? '있음' : missing(_gps == GpsAction.keep)}',
+          '위치 $gpsText',
           '기기 ${deviceName.isEmpty ? missing(_device == DeviceAction.keep) : deviceName}',
           if (r.reEncoded) 'JPEG로 변환됨',
         ];
@@ -432,6 +456,11 @@ class _EditScreenState extends State<EditScreen> {
           label: const Text('사진 고르고 수정하기 (여러 장 가능)'),
         ),
         const SizedBox(height: 8),
+        if (_items.any((it) => it.gpsHidden))
+          GpsHiddenNotice(
+            count: _items.where((it) => it.gpsHidden).length,
+            access: widget.mediaLocation,
+          ),
         for (final it in _items)
           ListTile(
             dense: true,

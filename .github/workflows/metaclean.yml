@@ -72,10 +72,16 @@ jobs:
           M=android/app/src/main/AndroidManifest.xml
           sed -i 's/android:label="metaclean"/android:label="메타지우개 플러스"/' "$M"
           # INTERNET: 새 버전 확인에만 쓴다. WRITE_EXTERNAL_STORAGE: 옛 안드로이드(9 이하) 갤러리 저장용.
-          sed -i '0,/<application/s//<uses-permission android:name="android.permission.INTERNET" \/>\n    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="28" \/>\n    <application/' "$M"
+          # ACCESS_MEDIA_LOCATION: 고른 사진 속 촬영 위치를 가리지 않고 받기 (안드로이드 10+, 앱이 처음 사진을 고를 때 묻는다).
+          sed -i '0,/<application/s//<uses-permission android:name="android.permission.INTERNET" \/>\n    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="28" \/>\n    <uses-permission android:name="android.permission.ACCESS_MEDIA_LOCATION" \/>\n    <application/' "$M"
           cat "$M"
           grep -q 'android:label="메타지우개 플러스"' "$M"
           grep -q 'android.permission.INTERNET' "$M"
+          grep -q 'android.permission.ACCESS_MEDIA_LOCATION' "$M"
+          # 권한 부품(permission_handler)이 안드로이드 37 기준으로 만들어져 있다. 개인비서와 같게 맞춘다.
+          G=android/app/build.gradle.kts
+          sed -i 's/compileSdk = flutter.compileSdkVersion/compileSdk = maxOf(flutter.compileSdkVersion, 37)/' "$G"
+          grep -q 'compileSdk = maxOf(flutter.compileSdkVersion, 37)' "$G"
       - name: APK 빌드
         working-directory: apps/metaclean
         env:

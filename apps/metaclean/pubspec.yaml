@@ -1,7 +1,7 @@
 name: metaclean
 description: 사진·문서 메타데이터 지우개·수정·기록 앱 (중고거래용)
 publish_to: none
-version: 2.3.0+1
+version: 2.3.1+1
 
 environment:
   sdk: ^3.5.0
@@ -22,6 +22,7 @@ dependencies:
   device_info_plus: ">=11.0.0 <14.0.0"
   url_launcher: ^6.3.0
   xml: ^7.0.1
+  permission_handler: ^13.0.2
 
 dev_dependencies:
   flutter_test:

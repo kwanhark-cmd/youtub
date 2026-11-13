@@ -5,16 +5,27 @@ import 'package:exif/exif.dart';
 import 'package:flutter/material.dart';
 import 'package:gal/gal.dart';
 import 'package:image/image.dart' as img;
-import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 
 import 'out_name.dart';
+import 'photo_gps.dart';
+import 'photo_pick.dart';
 import 'strip.dart';
 
 /// 판매용: 사진의 메타데이터를 지워 깨끗한 사본을 만들고 공유한다.
 class CleanScreen extends StatefulWidget {
-  const CleanScreen({super.key});
+  const CleanScreen({
+    super.key,
+    this.pickPhotos = pickOriginalPhotos,
+    this.mediaLocation = const MediaLocationAccess(),
+    this.tempDir = getTemporaryDirectory,
+  });
+
+  /// 사진을 고르는 방법·위치 권한·임시 폴더 (테스트에서 바꿔 끼움).
+  final PickPhotos pickPhotos;
+  final MediaLocationAccess mediaLocation;
+  final Future<Directory> Function() tempDir;
 
   @override
   State<CleanScreen> createState() => _CleanScreenState();
@@ -24,7 +35,8 @@ class _Item {
   _Item(this.name);
   final String name;
   int beforeCount = 0;
-  bool hadGps = false;
+  /// 원본(받은 사진)의 위치 정보 상태. 좌표가 제대로 있을 때만 "제거됨"이라고 쓴다.
+  GpsState gps = GpsState.none;
   String? takenAt;
   String? cleanedPath;
   int afterCount = 0;
@@ -34,29 +46,30 @@ class _Item {
 }
 
 class _CleanScreenState extends State<CleanScreen> {
-  final _picker = ImagePicker();
   final List<_Item> _items = [];
   bool _busy = false;
 
   Future<void> _pickAndClean() async {
-    final files = await _picker.pickMultiImage();
-    if (files.isEmpty) return;
+    await askMediaLocationOnce(context, widget.mediaLocation);
+    if (!mounted) return;
+    final files = await widget.pickPhotos(multiple: true);
+    if (files.isEmpty || !mounted) return;
     setState(() {
       _busy = true;
       _items.clear();
     });
-    final runDir = await freshRunDir(await getTemporaryDirectory(), 'clean_');
+    final runDir = await freshRunDir(await widget.tempDir(), 'clean_');
     for (final f in files) {
       final item = _Item(f.name);
       _items.add(item);
       try {
-        final src = await f.readAsBytes();
+        final src = await f.read();
+        item.gps = gpsStateOfBytes(src);
 
         // 1) 원본의 메타데이터 확인
         try {
           final tags = await readExifFromBytes(src);
           item.beforeCount = tags.length;
-          item.hadGps = tags.keys.any((k) => k.contains('GPS'));
           item.takenAt = tags['EXIF DateTimeOriginal']?.printable ??
               tags['Image DateTime']?.printable;
         } catch (_) {
@@ -151,6 +164,12 @@ class _CleanScreenState extends State<CleanScreen> {
             label: const Text('사진 고르기 (여러 장 가능)'),
           ),
           const SizedBox(height: 12),
+          if (_items.any((it) => it.gps == GpsState.blank))
+            GpsHiddenNotice(
+              count: _items.where((it) => it.gps == GpsState.blank).length,
+              access: widget.mediaLocation,
+              kind: GpsNoticeKind.clean,
+            ),
           Expanded(
             child: _items.isEmpty
                 ? const Center(child: Text('아직 고른 사진이 없어요'))
@@ -169,7 +188,11 @@ class _CleanScreenState extends State<CleanScreen> {
                         if (it.takenAt != null) {
                           sub.write(' · 원본 촬영일 ${it.takenAt}');
                         }
-                        if (it.hadGps) sub.write(' · 위치정보(GPS) 제거됨');
+                        if (it.gps == GpsState.valid) {
+                          sub.write(' · 위치정보(GPS) 제거됨');
+                        } else if (it.gps == GpsState.blank) {
+                          sub.write(' · 받은 사진의 위치가 이미 가려져 있었음(원본 위치 확인 불가)');
+                        }
                         if (it.hiddenDataRemoved) sub.write(' · 숨은 데이터(모션포토) 제거됨');
                         if (it.reEncoded) sub.write(' · JPEG로 변환됨');
                       }

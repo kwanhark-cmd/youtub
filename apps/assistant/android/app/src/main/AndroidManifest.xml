@@ -12,6 +12,8 @@
     <uses-permission android:name="android.permission.BLUETOOTH_CONNECT"/>
     <!-- 메타지우개 플러스: 옛 안드로이드(9 이하)에서 사진을 갤러리에 저장 (gal). 단독 앱과 같은 값 -->
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="28"/>
+    <!-- 메타지우개 플러스: 고른 사진 속 촬영 위치를 가리지 않고 받기 (안드로이드 10+, 처음 사진을 고를 때 묻는다). 단독 앱과 같은 값 -->
+    <uses-permission android:name="android.permission.ACCESS_MEDIA_LOCATION"/>
     <application
         android:label="개인비서"
         android:usesCleartextTraffic="true"

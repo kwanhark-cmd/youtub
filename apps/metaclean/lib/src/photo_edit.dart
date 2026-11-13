@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:image/image.dart' as img;
 
 import 'exif_utils.dart';
+import 'photo_gps.dart';
 import 'photo_xmp.dart';
 import 'strip.dart';
 
@@ -35,12 +36,22 @@ const _deviceTagsExif = [
 
 /// 일부 수정 결과.
 class PhotoEditResult {
-  const PhotoEditResult({required this.bytes, required this.reEncoded});
+  const PhotoEditResult({
+    required this.bytes,
+    required this.reEncoded,
+    this.sourceGps = GpsState.none,
+  });
 
   final Uint8List bytes;
 
   /// JPEG가 아니어서 JPEG로 다시 저장했는지 (JPEG는 화질 그대로).
   final bool reEncoded;
+
+  /// 받은 사진(원본)의 위치 정보 상태.
+  ///
+  /// [GpsState.blank] 이면 폰이 위치를 가린 채 사진을 넘겨준 것이다. 이때 비어 있는
+  /// 위치 칸은 결과에 남기지 않는다 (위치 "그대로"여도).
+  final GpsState sourceGps;
 }
 
 /// 사진의 날짜·위치·촬영 기기 중 고른 것만 고친다. 나머지 EXIF는 그대로 둔다.
@@ -90,7 +101,10 @@ PhotoEditResult? editPhotoMeta(
     }
   }
 
+  var sourceGps = GpsState.none;
+
   void apply(img.ExifData exif) {
+    sourceGps = gpsStateOfExif(exif);
     switch (dateAction) {
       case DateAction.keep:
         break;
@@ -115,7 +129,8 @@ PhotoEditResult? editPhotoMeta(
     }
     switch (gps) {
       case GpsAction.keep:
-        break;
+        // 좌표가 빈(가려진) 위치 칸은 그대로 옮기지 않고 깨끗이 뗀다.
+        dropBrokenGps(exif);
       case GpsAction.remove:
         removeGps(exif);
       case GpsAction.change:
@@ -153,7 +168,8 @@ PhotoEditResult? editPhotoMeta(
     apply(exif);
     final out = img.injectJpgExif(base.bytes, exif);
     if (out == null) return null;
-    return PhotoEditResult(bytes: withXmp(out), reEncoded: false);
+    return PhotoEditResult(
+        bytes: withXmp(out), reEncoded: false, sourceGps: sourceGps);
   }
 
   final decoded = img.decodeImage(src);
@@ -162,5 +178,6 @@ PhotoEditResult? editPhotoMeta(
   return PhotoEditResult(
     bytes: withXmp(Uint8List.fromList(img.encodeJpg(decoded, quality: 95))),
     reEncoded: true,
+    sourceGps: sourceGps,
   );
 }

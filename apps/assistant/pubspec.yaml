@@ -1,7 +1,7 @@
 name: personal_assistant
 description: "개인비서 — 채널·대화·하드·비우기·금고·메타지우개를 하나로"
 publish_to: none
-version: 1.1.0+2
+version: 1.1.1+2
 resolution: workspace
 environment:
   sdk: ^3.13.0
