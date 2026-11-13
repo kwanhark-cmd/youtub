@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:assistant_core/assistant_core.dart';
@@ -8,6 +9,7 @@ import 'package:personal_assistant/app/assistant_state.dart';
 import 'package:personal_assistant/modules/metaclean_module.dart';
 import 'package:personal_assistant/modules/registry.dart';
 import 'package:personal_assistant/ui/assistant_app.dart';
+import 'package:personal_assistant/ui/module_host.dart';
 
 import 'support.dart';
 
@@ -136,5 +138,34 @@ void main() {
     expect(asked, 0);
     expect(find.textContaining('새 버전이 나왔어요'), findsNothing);
     expect(find.byIcon(Icons.info_outline), findsNothing);
+  });
+
+  testWidgets('360 너비 + 아주 큰 글씨 + 어둡게·고대비: 메타지우개 네 탭이 넘치지 않고, 단추는 52·17 굵게', (t) async {
+    t.view.physicalSize = const Size(720, 1280); // 360 × 640
+    t.view.devicePixelRatio = 2;
+    addTearDown(t.view.reset);
+    final s = stateWith(MetacleanModule());
+    s.settings
+      ..textSize = TextSize.huge
+      ..themeMode = 'dark'
+      ..highContrast = true;
+    await s.login(s.auth.create('관학', '1234'));
+    await t.pumpWidget(AssistantApp(state: s));
+    await t.pumpAndSettle();
+    unawaited(ModuleHost.push(t.element(find.byKey(const PageStorageKey('home-list'))), s, ModuleId.metaclean));
+    await t.pumpAndSettle();
+    expect(t.takeException(), isNull);
+    // 개인비서 글씨 크기가 모듈 안까지 그대로 (1.5배)
+    expect(MediaQuery.textScalerOf(t.element(find.text('사진 지우기'))).scale(10), closeTo(15, 0.001));
+    for (final tab in ['사진 수정', '문서', '구매 기록', '사진 지우기']) {
+      await t.tap(find.text(tab));
+      await t.pumpAndSettle();
+      expect(t.takeException(), isNull, reason: tab);
+    }
+    final pick = find.ancestor(of: find.text('사진 고르기 (여러 장 가능)'), matching: find.byWidgetPredicate((w) => w is ButtonStyleButton));
+    expect(t.getSize(pick).height, greaterThanOrEqualTo(52));
+    final label = t.widget<RichText>(find.byWidgetPredicate((w) => w is RichText && w.text.toPlainText() == '사진 고르기 (여러 장 가능)'));
+    expect(label.text.style!.fontSize, 17);
+    expect(label.text.style!.fontWeight, FontWeight.w700);
   });
 }
