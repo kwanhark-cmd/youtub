@@ -23,6 +23,18 @@ cd packages/<모듈> && flutter test
 - [ ] 5. 공통 규칙 전체 (정해진 목록 없음 → BLOCKERS.md)
 - [ ] 6. 앱별 남은 항목 (정해진 목록 없음 → BLOCKERS.md)
 - [x] 설치 방법 정리 (열쇠 없이): 안드로이드 = 앱 밖 백업 → 받기 → 지우기 → 설치 → 되살리기, 컴퓨터 = 새 파일로 바꾸기
+- [x] 개인비서 1.1.0: 여섯 번째 모듈 "메타지우개 플러스" (가지 `assistant-meta`, 아직 푸시·병합 전)
+
+## 메타지우개 플러스 모듈 (1.1.0) — 끝난 것
+- 구조: `apps/assistant` → `apps/metaclean` 경로 의존성 (코드 복사 없음, metaclean 은 workspace 밖 단독 앱 그대로).
+  입구 `apps/metaclean/lib/assistant_entry.dart` 의 `metacleanApp()` = `MetaCleanApp(hostedByAssistant: true)`
+- hostedByAssistant: 켤 때 업데이트 확인 안 함, 새 버전 띠·ⓘ 단추 숨김 (단독 앱은 기본 false 라 그대로)
+- 부품 판 맞춤 (metaclean): share_plus 10→13, file_picker 10→13, syncfusion_flutter_pdf 31→35, xml 6→7
+  (대화 모듈의 pdf 3.13 이 xml 7 을 요구 → syncfusion 33 이상 필요). 코드: SharePlus.instance.share, FilePicker 정적 함수, XmlName.qualified
+- core: ModuleId.metaclean(청록·🧹), 음성 낱말, 브리핑 순서 / 본체: MetacleanModule, 타일 아이콘 camera.png
+- 안드로이드 매니페스트: WRITE_EXTERNAL_STORAGE maxSdkVersion 28 (gal) / iOS·맥 Info.plist: NSPhotoLibraryAddUsageDescription
+- build.yml 검사·테스트 작업에 metaclean pub get·analyze·test 추가 (metaclean.yml 은 그대로)
+- 남은 확인: 실제 안드로이드에서 개인비서 안 메타지우개 사진 고르기·갤러리 저장·공유, 윈도우 빌드(gal 윈도우 플러그인), metaclean 단독 apk 빌드 (이 환경엔 안드로이드 SDK 없음 → CI 에서)
 
 ## 설치·새 버전 (열쇠 없이) — 끝난 것
 - 서명 열쇠를 쓰지 않음: build.yml 의 Secrets 단계·경고 삭제, build.gradle.kts 는 늘 임시(debug) 열쇠
@@ -34,7 +46,7 @@ cd packages/<모듈> && flutter test
 - 남은 확인: 실제 휴대폰에서 백업 → 지우기 → 설치 → 되살리기 (BLOCKERS.md)
 
 ## 테스트 현황
-- core 20, 본체 62, 채널 190(+5 건너뜀), 대화 96, 비우기 172, 금고 131(+단독 앱 전용 4 건너뜀)
+- core 21, 본체 65, 채널 190(+5 건너뜀), 대화 96, 비우기 172, 금고 131(+단독 앱 전용 4 건너뜀), 메타지우개 90 (1.1.0, 2026-11-13)
 - 리눅스 빌드·실행 확인: 첫 화면 0.1~0.15초, 다섯 모듈 모두 열림(채널 0.23초, 대화 0.1초, 비우기 0.56초, 금고 0.03초)
 
 ## 남은 일 (다음 세션)

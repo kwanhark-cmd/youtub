@@ -14,3 +14,7 @@
   안드로이드는 앱을 지우면 앱 안 자료가 지워지므로, 앱·문서·Releases 설명 어디서든 "지우기"보다 "앱 밖 백업"을 먼저 말한다.
   윈도우·맥·리눅스는 새 파일로 바꾸면 사용자 폴더의 자료가 그대로 남는다. 앱은 스스로 내려받거나 설치하지 않고 공개 Releases 페이지(또는 안드로이드 apk)를 브라우저로 연다.
 - **모듈의 단독 앱 업데이트**: 개인비서 안에서는 숨긴다(각 모듈 assistant_entry 에서 hostedByAssistant 를 켬). 단독 앱 저장소의 다른 앱을 설치하게 되기 때문.
+- **메타지우개 플러스 모듈 (1.1.0)**: 코드를 옮기거나 복사하지 않고 `apps/assistant` 가 `apps/metaclean` 을 경로 의존성으로 쓴다.
+  metaclean 은 workspace 에 넣지 않는다(단독 앱의 pubspec.lock·metaclean.yml 빌드를 그대로 두기 위해). 대신 metaclean 의 부품 판을
+  workspace 와 함께 풀리는 판(share_plus 13, file_picker 13, syncfusion_flutter_pdf 35, xml 7)으로 맞춘다. 개인비서 안에서는
+  `MetaCleanApp(hostedByAssistant: true)` 로 열어 단독 앱 업데이트 확인·띠·ⓘ 를 숨긴다. 저장 자료가 없어 가져오기·백업 대상이 아니다.
