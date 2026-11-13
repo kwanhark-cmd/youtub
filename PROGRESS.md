@@ -1,8 +1,8 @@
 # 진행 상황 (PROGRESS)
 
 > 이어서 하려면: "PROGRESS.md를 읽고 이어서 진행"
-> 작업 브랜치: `claude/load-code-conversation-g1ggzs`(윈도우·리눅스 빌드 고침 포함) 위의 `assistant-keyfree` → 확인 뒤 `main` 에 병합
-> (`main` 은 윈도우 빌드 고침이 없어 마지막 실행 #9 가 실패한 상태)
+> 작업 브랜치: `claude/load-code-conversation-g1ggzs` — 2026-11-13 에 `main` 에 합침 (윈도우·리눅스 빌드 고침, 열쇠 없는 설치 방법 포함. 합치기 전 빌드 #27 은 모든 작업 통과)
+> 새 버전 공개는 Actions → "개인비서 검사와 빌드" → Run workflow(main) → release 체크
 
 ## 개발 환경 (새 세션이면)
 ```
