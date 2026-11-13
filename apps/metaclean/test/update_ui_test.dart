@@ -210,4 +210,28 @@ void main() {
     expect(find.textContaining('인터넷 창을 열지 못했어요'), findsOneWidget);
     expect(find.text('$releasePageUrl'), findsOneWidget);
   });
+
+  testWidgets('개인비서 안에서는 업데이트 확인·띠·ⓘ 단추가 모두 없다', (tester) async {
+    await phone(tester);
+    var asked = 0;
+    await tester.pumpWidget(MetaCleanApp(
+      currentBuild: 60,
+      currentVersion: '2.0.0',
+      updateFetch: (_) async {
+        asked++;
+        return newer;
+      },
+      hostedByAssistant: true,
+    ));
+    await tester.pumpAndSettle();
+    expect(asked, 0);
+    expect(find.textContaining('새 버전이 나왔어요'), findsNothing);
+    expect(find.byTooltip('앱 정보·업데이트'), findsNothing);
+    expect(find.byIcon(Icons.info_outline), findsNothing);
+    // 네 가지 기능은 그대로
+    for (final t in ['사진 지우기', '사진 수정', '문서', '구매 기록']) {
+      expect(find.text(t), findsOneWidget);
+    }
+    expect(find.text('사진 고르기 (여러 장 가능)'), findsOneWidget);
+  });
 }
