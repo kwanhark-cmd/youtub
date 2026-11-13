@@ -1,4 +1,5 @@
 import 'package:assistant_core/assistant_core.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../app/assistant_state.dart';
@@ -50,6 +51,10 @@ class _ImportScreenState extends State<ImportScreen> {
           return ListView(padding: const EdgeInsets.all(AssistantTheme.gap), children: [
             Text('원본은 그대로 두고 복사만 해요. 단독 앱은 계속 써도 되고, 통합 앱 자료와는 따로예요.', style: t.bodyLarge),
             const SizedBox(height: AssistantTheme.gap),
+            if (defaultTargetPlatform == TargetPlatform.android) ...[
+              const Notice(key: Key('import-android-guide'), icon: 'package', title: androidImportTitle, body: androidImportBody),
+              const SizedBox(height: AssistantTheme.gap),
+            ],
             if (list.isEmpty) const Notice(icon: 'search', title: '이 기기에서 기존 앱 자료를 찾지 못했어요', body: '하드 자료 찾기는 PC 엔진을 그대로 쓰므로 옮길 것이 없어요.'),
             for (final s in list)
               Padding(
@@ -75,3 +80,9 @@ class _ImportScreenState extends State<ImportScreen> {
     );
   }
 }
+
+/// 안드로이드는 다른 앱의 자료 폴더를 읽을 수 없어서, 백업 파일로 옮긴다.
+const androidImportTitle = '안드로이드는 다른 앱 자료를 직접 읽을 수 없어요';
+const androidImportBody = '각 단독 앱의 설정에서 백업 파일을 만들어 앱 밖(다운로드 폴더 등)에 저장해 주세요. '
+    '그다음 개인비서에서 그 모듈을 열고, 모듈 설정의 되살리기(복원) 단추로 백업 파일을 불러오면 돼요. '
+    '금고는 새 금고를 먼저 만든 뒤 불러와요.';

@@ -9,6 +9,7 @@ import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:personal_assistant/app/assistant_state.dart';
 import 'package:personal_assistant/ui/assistant_app.dart';
+import 'package:personal_assistant/ui/import_screen.dart';
 import 'package:personal_assistant/ui/settings_screen.dart';
 
 import 'support.dart';
@@ -51,7 +52,7 @@ void main() {
       expect([backup, get, delete, install, restore], orderedEquals([...[backup, get, delete, install, restore]]..sort()));
       expect(s, contains('앱 안 자료도 함께 지워지니'));
       expect(s, contains('앱 밖'));
-      expect(s, contains('백업에서 되살리기'));
+      expect(s, contains('되살리기(복원)'));
       // "자료가 그대로 남는다"는 약속은 안드로이드에서 하지 않는다.
       expect(s, isNot(contains('그대로 남아요')));
       expect(s, contains('덮어 설치가 안 돼요'));
@@ -136,6 +137,26 @@ void main() {
     await tapUpdate(t);
     expect(find.text('지금이 최신 버전이에요.'), findsWidgets);
   });
+
+  for (final android in [true, false]) {
+    testWidgets(android ? '안드로이드 가져오기 화면: 백업 파일로 옮기는 안내' : '컴퓨터 가져오기 화면: 안드로이드 안내 없음', (t) async {
+      debugDefaultTargetPlatformOverride = android ? TargetPlatform.android : TargetPlatform.linux;
+      try {
+        final s = fakeState(tmp);
+        await t.pumpWidget(MaterialApp(home: ImportScreen(state: s)));
+        await t.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 200)));
+        await t.pumpAndSettle();
+        expect(find.byKey(const Key('import-android-guide')), android ? findsOneWidget : findsNothing);
+        if (android) {
+          expect(find.text(androidImportTitle), findsOneWidget);
+          expect(androidImportBody, contains('앱 밖'));
+          expect(androidImportBody, contains('되살리기(복원)'));
+        }
+      } finally {
+        debugDefaultTargetPlatformOverride = null;
+      }
+    });
+  }
 
   test('앱이 아는 버전(appVersion)은 pubspec.yaml 의 version 과 같다', () {
     final pub = File('pubspec.yaml').readAsStringSync();

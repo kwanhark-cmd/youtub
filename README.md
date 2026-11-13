@@ -22,7 +22,8 @@ claude.ai 작업방을 주제별로 정리해 모아 두는 저장소입니다.
 - 사용 설명: [`docs/개인비서_사용법.md`](docs/개인비서_사용법.md)
 - 최종 보고: [`docs/보고/최종보고.md`](docs/보고/최종보고.md)
 - 코드: `apps/assistant`(본체), `packages/`(공통·모듈), `modules_src/harddisk`(하드 엔진)
-- 설치 파일: 이 저장소 **Releases** (또는 Actions → 가장 최근 "개인비서 검사와 빌드" → Artifacts)
+- 설치 파일: 공개 내려받기 페이지 [Releases](https://github.com/kwanhark-cmd/youtub/releases/latest) (로그인 필요 없음)
+- 새 버전: 안드로이드는 **먼저 각 모듈에서 백업 파일을 앱 밖에 저장** → 새 파일 받기 → 기존 앱 지우기 → 설치 → 되살리기. 컴퓨터는 새 파일로 바꾸면 자료가 그대로 남아요. 자세히: 사용법 "새 버전으로 바꾸기" (서명 열쇠 등록 같은 준비 없음)
 
 ## 사진 메타지우개 (중고거래용 독립 앱)
 

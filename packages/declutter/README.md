@@ -1,5 +1,9 @@
 # 집안 물건 비우기 판매 폐기 비서
 
+> **개인비서(통합 앱) 안에서 쓸 때**: 아래의 설치·업데이트 안내는 단독 앱 이야기예요. 개인비서 안에서는 이 모듈의 업데이트 단추가 보이지 않아요.
+> 개인비서 설치·새 버전은 [`docs/개인비서_사용법.md`](../../docs/개인비서_사용법.md)를 보세요. 개인비서는 서명 열쇠를 쓰지 않아서,
+> 안드로이드 새 버전은 **먼저 백업 파일을 앱 밖에 저장 → 새 파일 받기 → 기존 앱 지우기 → 설치 → 되살리기** 순서예요.
+
 집안 물건을 사진·영상으로 등록하면 **지금 쓰는 것(파랑) / 판매(초록) / 폐기(빨강)** 세 가지로 나누고,
 판매글 작성과 버리는 방법 안내까지 도와 집을 가볍게 비우게 해 주는 앱입니다.
 
@@ -94,6 +98,6 @@ flutter run -d linux
 
 - Flutter 3.47.9 / Dart 3.13.
 - **새 버전 올리기**: `pubspec.yaml`의 version과 `lib/state/app_state.dart`의 `appVersion`을 함께 올리고 `CHANGELOG.md`에 내용을 쓴 뒤, 커밋 메시지에 `[배포]`를 넣어 main에 올리면 GitHub Actions가 Releases에 올립니다 (Actions 화면에서 직접 실행해도 됨).
-- **안드로이드 서명 열쇠**: GitHub 저장소 Settings → Secrets and variables → Actions 에 `ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD` 두 값을 넣어 두세요. 한 번 넣으면 **절대 바꾸지 마세요** (바꾸면 덮어쓰기 설치가 안 됨). 앱 식별자 `com.binugi.binugi`도 바꾸면 안 됩니다. 구조와 결정 이유는 `PLAN.md`, `DECISIONS.md`, 진행 상황은 `PROGRESS.md`.
+- **안드로이드 서명 열쇠**: 이 저장소(개인비서)에서는 쓰지 않아요. 넣어 둘 값도 없어요. 단독 앱 식별자 `com.binugi.binugi`는 바꾸면 안 됩니다. 구조와 결정 이유는 `PLAN.md`, `DECISIONS.md`, 진행 상황은 `PROGRESS.md`.
 - 보고서: `docs/보고/`, 검증: `docs/검증/`. 보고서용 화면 사진 다시 만들기: `flutter test test_screens --update-goldens`
 - 그림·글꼴 라이선스: `assets/licenses/` (Fluent Emoji 3D – MIT, Noto Sans KR – OFL)
