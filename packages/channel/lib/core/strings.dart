@@ -208,6 +208,9 @@ class S {
   static const settingsBackup = '백업 만들기';
   static const settingsRestore = '백업에서 복원';
   static const settingsBackupDone = '백업 파일을 만들었어요.';
+  static const settingsBackupInsideTitle = '백업이 앱 안에만 있어요';
+  static const settingsBackupInsideOnly =
+      '저장할 곳을 고르지 않아 백업이 앱 안에만 있어요. 앱을 지우면 함께 지워질 수 있으니, 다시 눌러 앱 밖(다운로드 등)에 저장해 주세요.';
   static const settingsRestoreDone = '복원했어요. 연결된 계정은 보안을 위해 다시 연결해 주세요.';
   static const settingsRestoreBad = '이 파일은 이 앱의 백업 파일이 아니에요.';
   static const settingsReset = '초기화 (모든 자료 삭제)';

@@ -212,6 +212,10 @@ class AppState extends ChangeNotifier {
   // ---------- 업데이트 ----------
   UpdateInfo? update;
 
+  /// 개인비서(통합 앱) 안에서 열렸으면 true. 그때는 이 모듈의 단독 앱 업데이트(카드·배너)를 숨긴다:
+  /// 단독 앱 저장소를 보고 다른 앱을 설치하게 되므로. 업데이트는 개인비서 설정에서 한다.
+  bool hostedByAssistant = false;
+
   /// 앱 시작 시 하루 한 번 조용히 확인 (실패해도 아무 말 안 함)
   Future<void> quietUpdateCheck() async {
     final key = '${clock.now().year}-${clock.now().month}-${clock.now().day}';

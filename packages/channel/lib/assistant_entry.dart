@@ -20,7 +20,6 @@ import 'features/corner/material_source.dart';
 import 'features/production/production_service.dart';
 import 'features/runner/notifier.dart';
 import 'features/tools/tools_service.dart';
-import 'features/update/installer.dart';
 import 'features/voice/voice_commands.dart';
 import 'features/voice/voice_io.dart';
 import 'stages.dart';
@@ -70,7 +69,15 @@ Future<AppState> openChannelState({
       return f?.path;
     },
     pickDirectory: () => FilePicker.getDirectoryPath(),
-    installUpdate: UpdateInstaller(log).install,
+    // 안드로이드: 백업을 시스템 저장 창으로 앱 밖(다운로드·드라이브 등)에 저장한다.
+    // 새 버전은 "기존 앱 지우고 설치"라서, 앱 안에만 있는 백업은 앱과 함께 지워진다.
+    saveFileAs: Platform.isAndroid
+        ? (name, bytes) async {
+            final uri = await FilePicker.saveFile(fileName: name, bytes: bytes, dialogTitle: '백업 파일을 저장할 곳을 고르세요');
+            return uri == null ? null : '고른 곳의 $name';
+          }
+        : null,
+    // installUpdate 는 넣지 않는다: 개인비서 안에서는 이 모듈의 단독 앱 설치 파일을 받아 설치하지 않는다.
     osName: Platform.operatingSystem,
   );
   return openChannelStateWith(env, userName: userName, skipOnboarding: skipOnboarding);
@@ -82,7 +89,8 @@ Future<AppState> openChannelStateWith(AppEnv env, {required String userName, boo
     registerStages();
     _stagesRegistered = true;
   }
-  final state = AppState(env);
+  // 개인비서 안: 단독 앱 "업데이트 확인"은 숨김.
+  final state = AppState(env)..hostedByAssistant = true;
   await signInAs(state, userName);
   if (skipOnboarding) state.user?.settings.onboardingDone = true;
   return state;

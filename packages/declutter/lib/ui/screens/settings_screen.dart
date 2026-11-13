@@ -131,7 +131,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         padding: const EdgeInsets.all(AppSizes.page),
         children: [
           // ---------- 맨 위: 업데이트 · 문제 신고 · 상태 ----------
-          const UpdateCard(),
+          if (!s.hostedByAssistant) const UpdateCard(),
           BigButton(label: '문제 신고 (기록 보내기)', emoji: 'warning', color: p.attention, textColor: p.onAttention, onTap: reportProblem),
           const SizedBox(height: AppSizes.gap),
           const StatusChips(),
@@ -593,14 +593,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final picker = context.read<MediaPicker>();
     try {
       final f = await s.backup.createFile(pw, appVersion: appVersion);
-      final dir = await picker.chooseSaveFolder();
-      var where = f.path;
-      if (dir != null) {
-        final out = await f.copy('$dir${Platform.pathSeparator}${f.uri.pathSegments.last}');
-        where = out.path;
+      final where = await picker.exportBackup(f);
+      if (where == null) {
+        // 앱 안에만 있음: 휴대폰에서 앱을 지우면 함께 지워진다.
+        showMessage('저장할 곳을 고르지 않아 백업이 앱 안에만 있어요. 앱을 지우면 함께 지워질 수 있으니, 다시 눌러 앱 밖(다운로드 등)에 저장해 주세요.');
+        return;
       }
       await Clipboard.setData(ClipboardData(text: where));
-      showMessage('백업을 만들었어요 (위치 복사됨): $where');
+      showMessage('백업을 앱 밖에 저장했어요 (위치 복사됨): $where');
     } on UserFacingException catch (e) {
       showMessage(e.message);
     } catch (e, st) {

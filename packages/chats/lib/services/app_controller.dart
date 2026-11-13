@@ -59,6 +59,10 @@ class AppController extends ChangeNotifier {
   final KeyStore keys;
   final VoiceService voice;
   final bool autoUpdateCheck;
+
+  /// 개인비서(통합 앱) 안에서 열렸으면 true. 이 모듈의 단독 앱 업데이트(카드·배지·조용한 확인)를 끈다:
+  /// 단독 앱 저장소를 보고 다른 앱 파일을 설치하게 되므로. 업데이트는 개인비서 설정에서 한다.
+  final bool hostedByAssistant;
   final bool inMemoryDb;
   final Future<Uint8List> Function(String asset) loadAsset;
   late final UserService users;
@@ -78,6 +82,7 @@ class AppController extends ChangeNotifier {
     required this.voice,
     this.inMemoryDb = false,
     this.autoUpdateCheck = true,
+    this.hostedByAssistant = false,
     Future<Uint8List> Function(String asset)? loadAsset,
   }) : loadAsset = loadAsset ?? ((a) async => (await rootBundle.load(a)).buffer.asUint8List()) {
     users = UserService(root);
@@ -140,7 +145,7 @@ class AppController extends ChangeNotifier {
           unawaited(checkGmail(silent: true).then((_) => notifyListeners(), onError: (_) {}));
         }
       }
-      if (autoUpdateCheck) unawaited(checkForUpdate(silent: true).then((_) => notifyListeners(), onError: (_) {}));
+      if (autoUpdateCheck && !hostedByAssistant) unawaited(checkForUpdate(silent: true).then((_) => notifyListeners(), onError: (_) {}));
       fatalError = null;
       AppLog.info('사용자 열기', {'dataVersion': ss.database.version});
     } catch (e, st) {
@@ -495,6 +500,7 @@ class AppController extends ChangeNotifier {
   UpdateInfo? availableUpdate;
 
   bool get hasUpdateBadge {
+    if (hostedByAssistant) return false;
     final v = settings.latestVersion;
     return v != null && compareVersions(v, AppInfo.version) > 0;
   }

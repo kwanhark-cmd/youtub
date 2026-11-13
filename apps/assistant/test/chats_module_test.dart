@@ -145,4 +145,20 @@ void main() {
     await ChatsModule(s, make: () async => c).shareKeys(c);
     expect(await c.hasApiKey(), isFalse);
   });
+
+  test('개인비서 입구(hostedChatsController): 단독 앱 업데이트(배지·하루 한 번 확인) 꺼짐', () async {
+    final c = hostedChatsController(
+      root: Directory('${root.path}/hosted')..createSync(recursive: true),
+      keys: MemoryKeyStore(),
+      voice: NoVoiceService(),
+      inMemoryDb: true,
+      loadAsset: (a) async => File('$_samples/${a.split('/').last}').readAsBytesSync(),
+    );
+    await c.init();
+    await signInAs(c, '나');
+    c.updateSettings((s) => s.latestVersion = '99.0.0');
+    expect(c.hostedByAssistant, isTrue);
+    expect(c.hasUpdateBadge, isFalse);
+    c.signOut();
+  });
 }

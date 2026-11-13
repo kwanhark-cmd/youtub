@@ -48,6 +48,7 @@ class AppEnv {
     this.aiProviders,
     this.pickFile,
     this.pickDirectory,
+    this.saveFileAs,
     this.installUpdate,
     this.osName = '',
     this.setLauncherIcon,
@@ -71,6 +72,10 @@ class AppEnv {
 
   /// 폴더 고르기. 고르지 않으면 null.
   final Future<String?> Function()? pickDirectory;
+
+  /// 만든 파일을 사용자가 고른 앱 밖 위치(시스템 저장 창)에 저장한다. 저장한 곳 설명, 취소하면 null.
+  /// 개인비서 안의 안드로이드에서만 넣는다: 앱을 지우면 앱 안 파일도 지워지므로 백업은 앱 밖에 둬야 한다.
+  final Future<String?> Function(String fileName, Uint8List bytes)? saveFileAs;
 
   final String baseDir;
   final String documentsDir;

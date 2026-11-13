@@ -9,15 +9,21 @@ import 'package:path_provider/path_provider.dart';
 
 import 'app/app_controller.dart';
 import 'app/platform_services.dart';
+import 'app/services.dart';
+import 'core/crypto/vault_crypto.dart';
 import 'data/repository.dart';
 import 'ui/app.dart';
 
 Future<AppController> openVaultController() async {
-  final services = await createPlatformServices();
-  final c = AppController(services);
+  final c = hostedVaultController(await createPlatformServices());
   await c.init();
   return c;
 }
+
+/// 개인비서 안에서 쓰는 금고 컨트롤러: 단독 앱 업데이트 카드는 숨긴다 (업데이트는 개인비서 설정 하나로).
+/// [kdf]는 시험에서만 빠른 값으로 바꾼다.
+AppController hostedVaultController(AppServices services, {KdfParams kdf = KdfParams.standard}) =>
+    AppController(services, kdf: kdf)..hostedByAssistant = true;
 
 Widget vaultApp(AppController c) => VaultApp(controller: c);
 

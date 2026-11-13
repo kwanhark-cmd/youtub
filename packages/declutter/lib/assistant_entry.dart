@@ -41,7 +41,7 @@ Future<AppState> openDeclutterState({
   }
   final root = rootOverride ?? Directory('${(await getApplicationSupportDirectory()).path}${Platform.pathSeparator}binugi');
   await root.create(recursive: true);
-  return AppState.open(
+  final state = await AppState.open(
     dbFactory: factory,
     root: root,
     dbPath: inMemory ? 'file:assistant_mem${_memN++}_${DateTime.now().microsecondsSinceEpoch}?mode=memory&cache=shared' : null,
@@ -51,6 +51,8 @@ Future<AppState> openDeclutterState({
     secretStore: secretStore ?? (inMemory ? MemorySecretStore() : null),
     httpClient: httpClient,
   );
+  // 개인비서 안: 단독 앱 업데이트는 숨김 (개인비서 설정 → 업데이트 확인 하나만).
+  return state..hostedByAssistant = true;
 }
 
 Widget declutterApp(AppState state) => BinugiApp(state: state, picker: DeviceMediaPicker());

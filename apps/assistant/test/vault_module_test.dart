@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:account_vault/assistant_entry.dart';
 import 'package:account_vault/app/app_controller.dart';
 import 'package:account_vault/app/services.dart';
 import 'package:account_vault/core/crypto/vault_crypto.dart';
@@ -278,5 +279,11 @@ void main() {
     expect(asked, ['힉스필드']);
     expect(await m.releaseSecretForTool('힉스필드', (_) async => true), fakePw);
     expect(await m.releaseSecretForTool('없는서비스', (_) async => true), isNull);
+  });
+
+  test('개인비서 입구(hostedVaultController): 단독 앱 업데이트 카드 숨김', () {
+    expect(c.hostedByAssistant, isFalse, reason: '직접 만든 컨트롤러는 단독 앱 기본값');
+    final hosted = hostedVaultController(c.services, kdf: KdfParams.fastForTests);
+    expect(hosted.hostedByAssistant, isTrue);
   });
 }

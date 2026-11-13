@@ -1,9 +1,11 @@
 import 'dart:io';
 
+import 'package:file_picker/file_picker.dart' show FilePicker;
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:path/path.dart' as p;
 
 import '../core/logger.dart';
 
@@ -52,7 +54,11 @@ abstract class MediaPicker {
 
   /// 글자 파일 내용 읽기 (AI 열쇠, 구글 JSON, 제미나이 정리 파일 등)
   Future<String?> pickTextFile({List<String> extensions = const ['txt', 'csv', 'md', 'json']});
-  Future<String?> chooseSaveFolder();
+
+  /// 앱 안에 만든 백업 파일 [f]를 사용자가 고른 앱 밖 위치에 저장한다.
+  /// 저장한 곳(경로 또는 설명)을 돌려주고, 사용자가 취소하거나 실패하면 null.
+  /// 안드로이드는 앱을 지우면 앱 안 파일도 지워지므로, 업데이트 전에 꼭 앱 밖에 둬야 한다.
+  Future<String?> exportBackup(File f);
 }
 
 class DeviceMediaPicker implements MediaPicker {
@@ -136,11 +142,19 @@ class DeviceMediaPicker implements MediaPicker {
   }
 
   @override
-  Future<String?> chooseSaveFolder() async {
-    if (Platform.isAndroid || Platform.isIOS) return null;
+  Future<String?> exportBackup(File f) async {
+    final name = p.basename(f.path);
     try {
-      return await getDirectoryPath(confirmButtonText: '여기에 저장');
-    } catch (_) {
+      if (Platform.isAndroid || Platform.isIOS) {
+        // 시스템 저장 창 (다운로드·드라이브 등). 앱 전용 폴더가 아니라 사용자가 고른 곳에 만든다.
+        final uri = await FilePicker.saveFile(fileName: name, bytes: await f.readAsBytes(), dialogTitle: '백업 파일을 저장할 곳을 고르세요');
+        return uri == null ? null : '고른 곳의 $name';
+      }
+      final dir = await getDirectoryPath(confirmButtonText: '여기에 저장');
+      if (dir == null) return null;
+      return (await f.copy(p.join(dir, name))).path;
+    } catch (e) {
+      log.error('[파일] 백업 파일 앱 밖에 저장 실패', e);
       return null;
     }
   }

@@ -85,8 +85,18 @@ class FakePicker implements MediaPicker {
   Future<String?> pickVideo() async => video;
   @override
   Future<String?> pickBackupFile() async => backup;
+
+  /// 앱 밖 저장 위치(예: 휴대폰 "다운로드"). null 이면 사용자가 저장 창을 취소한 것.
+  Directory? outside;
+  final exported = <String>[];
   @override
-  Future<String?> chooseSaveFolder() async => null;
+  Future<String?> exportBackup(File f) async {
+    final dir = outside;
+    if (dir == null) return null;
+    final out = await f.copy('${dir.path}${Platform.pathSeparator}${f.uri.pathSegments.last}');
+    exported.add(out.path);
+    return out.path;
+  }
   @override
   Future<String?> pickTextFile({List<String> extensions = const []}) async => textFile ?? '이름,분류\n커피 머신,판매';
 }

@@ -32,8 +32,10 @@ class SettingsScreen extends StatelessWidget {
       restoreId: 'settings',
       children: [
         // 맨 위: 업데이트 확인 + 문제 신고
-        const UpdateCard(),
-        const SizedBox(height: AppTokens.s3),
+        if (!app.hostedByAssistant) ...[
+          const UpdateCard(),
+          const SizedBox(height: AppTokens.s3),
+        ],
         BigButton(
           label: '문제 신고(기록 내보내기)',
           icon: Icons.bug_report_rounded,

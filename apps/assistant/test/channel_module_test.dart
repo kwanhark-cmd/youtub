@@ -239,4 +239,10 @@ void main() {
     expect(u.ai.hasKey, isFalse);
     expect(u.settings.aiProvider, 'claude');
   });
+
+  test('개인비서 입구(openChannelStateWith): 단독 앱 "업데이트 확인" 숨김', () async {
+    final st = await channelState(root, chSecrets, now);
+    expect(st.hostedByAssistant, isTrue);
+    expect(st.env.installUpdate, isNull, reason: '단독 앱 설치 파일을 받아 설치하지 않음');
+  });
 }

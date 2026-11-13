@@ -141,4 +141,8 @@ void main() {
     expect(await m.syncSharedKeys(st), isFalse);
     expect(st.user.apiKey, 'sk-ant-test');
   });
+
+  test('개인비서 입구(openDeclutterState): 단독 앱 업데이트 카드·배너 숨김', () async {
+    expect(st.hostedByAssistant, isTrue);
+  });
 }

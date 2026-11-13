@@ -61,14 +61,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
           primary: false,
           onPressed: () => busy.run(_report),
         ),
-        const SizedBox(height: AppTokens.gapS),
-        BigButton(
-          key: const Key('update-check'),
-          label: S.updCheck,
-          icon: Icons.system_update,
-          primary: false,
-          onPressed: () => checkUpdateFlow(context, u),
-        ),
+        if (!widget.state.hostedByAssistant) ...[
+          const SizedBox(height: AppTokens.gapS),
+          BigButton(
+            key: const Key('update-check'),
+            label: S.updCheck,
+            icon: Icons.system_update,
+            primary: false,
+            onPressed: () => checkUpdateFlow(context, u),
+          ),
+        ],
         if (u.youtube.hasRealChannel)
           SwitchListTile(
             key: const Key('show-practice'),
@@ -579,6 +581,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Future<void> _backup() async {
     try {
+      final save = u.env.saveFileAs;
+      if (save != null) {
+        // 앱 밖 저장 창: 먼저 앱 안에 만들고, 사용자가 고른 곳(다운로드 등)에 저장한다.
+        final path = u.maintenance.backupTo(u.env.documentsDir);
+        final where = await save(path.split(Platform.pathSeparator).last, await File(path).readAsBytes());
+        if (!mounted) return;
+        await _info(where == null ? S.settingsBackupInsideTitle : S.settingsBackupDone, where ?? S.settingsBackupInsideOnly);
+        return;
+      }
       final path = u.maintenance.backupTo(await _exportDir());
       if (mounted) await _info(S.settingsBackupDone, path);
     } catch (e) {

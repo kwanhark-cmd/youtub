@@ -75,7 +75,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
         actions: [
-          if (s.hasUpdate)
+          if (s.hasUpdate && !s.hostedByAssistant)
             Padding(
               padding: const EdgeInsets.only(right: 4),
               child: ActionChip(

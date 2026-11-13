@@ -20,6 +20,8 @@ dependencies:
   path: 1.9.1
   image_picker: 1.2.4
   file_selector: 1.1.0
+  # 안드로이드에서 백업 파일을 앱 밖(다운로드 등)에 저장하는 저장 창. 채널·대화 모듈과 같은 판.
+  file_picker: ^13.3.2
   speech_to_text: 7.5.0
   flutter_tts: 4.2.5
   flutter_local_notifications: 22.3.3

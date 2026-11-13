@@ -254,7 +254,7 @@ void main() {
   });
 
   group('설정 → 업데이트 확인 화면', () {
-    Future<(AppState, List<String>, List<File>)> open(WidgetTester t, Map<String, dynamic>? release) async {
+    Future<(AppState, List<String>, List<File>)> open(WidgetTester t, Map<String, dynamic>? release, {bool hosted = false}) async {
       final calls = <String>[];
       final installed = <File>[];
       final base = copyFixture();
@@ -264,7 +264,7 @@ void main() {
         client: fakeGithub(release, calls: calls),
         install: (f) async => installed.add(f),
       );
-      final s = AppState(env);
+      final s = AppState(env)..hostedByAssistant = hosted;
       await s.login(env.accounts.verify(1, '1234')!);
       s.user!.settings.reduceMotion = true;
       await t.pumpWidget(ChannelBiseoApp(state: s));
@@ -303,6 +303,15 @@ void main() {
       expect(File(p.join(backup, 'users', 'u1', 'data.sqlite')).existsSync(), isTrue);
       expect(File(p.join(backup, 'users.sqlite')).existsSync(), isTrue);
       expect(t.takeException(), isNull);
+      await t.pumpWidget(const SizedBox());
+    });
+
+    testWidgets('개인비서 안에서는(hostedByAssistant) 단독 앱 업데이트 확인 버튼이 없음', (t) async {
+      final (_, calls, installed) = await open(t, releaseJson('v9.0.0'), hosted: true);
+      expect(find.byKey(const Key('update-check')), findsNothing);
+      expect(find.byKey(const Key('report-top')), findsOneWidget, reason: '문제 신고는 그대로');
+      expect(calls, isEmpty);
+      expect(installed, isEmpty);
       await t.pumpWidget(const SizedBox());
     });
 

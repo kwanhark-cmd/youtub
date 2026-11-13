@@ -33,7 +33,7 @@ class FakeVoice implements VoiceService {
 
 Future<Uint8List> fileAsset(String a) async => File(a).readAsBytesSync();
 
-AppController makeController({VoiceService? voice}) {
+AppController makeController({VoiceService? voice, bool hosted = false}) {
   final dir = Directory.systemTemp.createTempSync('aico_test');
   return AppController(
     root: dir,
@@ -41,13 +41,14 @@ AppController makeController({VoiceService? voice}) {
     voice: voice ?? FakeVoice(),
     inMemoryDb: true,
     autoUpdateCheck: false,
+    hostedByAssistant: hosted,
     loadAsset: fileAsset,
   );
 }
 
 /// 사용자 한 명 + 샘플 대화가 들어 있는 컨트롤러.
-Future<AppController> readyController({VoiceService? voice, void Function(AppSettings)? settings}) async {
-  final c = makeController(voice: voice);
+Future<AppController> readyController({VoiceService? voice, void Function(AppSettings)? settings, bool hosted = false}) async {
+  final c = makeController(voice: voice, hosted: hosted);
   await c.init();
   await c.createUser('시험');
   c.updateSettings((s) {

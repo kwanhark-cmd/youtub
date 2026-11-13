@@ -67,8 +67,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const UpdateCard(),
-          gap,
+          if (!c.hostedByAssistant) ...[const UpdateCard(), gap],
           // ---------- 상태 ----------
           SectionCard(
             title: '지금 상태',

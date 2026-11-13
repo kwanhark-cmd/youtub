@@ -16,6 +16,10 @@ class AppState extends ChangeNotifier {
   final AppEnv env;
   UserContext? user;
 
+  /// 개인비서(통합 앱) 안에서 열렸으면 true. 이 모듈의 단독 앱 "업데이트 확인"을 숨긴다:
+  /// 단독 앱 저장소를 보고 다른 앱을 설치하게 되므로. 업데이트는 개인비서 설정에서 한다.
+  bool hostedByAssistant = false;
+
   /// 로그인 전 화면의 글씨 크기 (마지막 사용자 설정을 기억).
   double get textScale =>
       user?.settings.textScale ?? (env.accounts.db.getSetting<num>('lastTextScale')?.toDouble() ?? 1.0);
@@ -162,6 +166,6 @@ class ChannelBiseoApp extends StatelessWidget {
     final u = state.user;
     if (u == null) return LoginScreen(state: state);
     if (!u.settings.onboardingDone) return OnboardingWizard(state: state, user: u);
-    return HomeShell(state: state, user: u);
+    return HomeShell(key: ObjectKey(u), state: state, user: u);
   }
 }
