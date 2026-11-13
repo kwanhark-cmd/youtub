@@ -240,7 +240,8 @@ class _StampScreenState extends State<StampScreen> {
               if (_savedPath != null) ...[
                 const SizedBox(height: 8),
                 OutlinedButton.icon(
-                  onPressed: () => Share.shareXFiles([XFile(_savedPath!)]),
+                  onPressed: () => SharePlus.instance
+                      .share(ShareParams(files: [XFile(_savedPath!)])),
                   icon: const Icon(Icons.ios_share),
                   label: const Text('기록된 사진 공유'),
                 ),

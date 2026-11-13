@@ -74,12 +74,15 @@ class _DocScreenState extends State<DocScreen> {
   }
 
   Future<void> _pick() async {
-    final res = await FilePicker.platform.pickFiles(withData: true);
-    if (res == null || res.files.isEmpty) return;
-    final f = res.files.first;
-    var bytes = f.bytes;
-    if (bytes == null && f.path != null) {
-      bytes = await File(f.path!).readAsBytes();
+    final files = await FilePicker.pickFiles();
+    if (files.isEmpty) return;
+    final f = files.first;
+    Uint8List? bytes;
+    try {
+      bytes = await f.readAsBytes();
+    } catch (_) {
+      final path = f.path;
+      if (path != null) bytes = await File(path).readAsBytes();
     }
     if (!mounted) return;
     if (bytes == null) {
@@ -187,7 +190,7 @@ class _DocScreenState extends State<DocScreen> {
     final bytes = _outBytes;
     if (path == null || bytes == null) return;
     try {
-      final saved = await FilePicker.platform.saveFile(
+      final saved = await FilePicker.saveFile(
         fileName: path.split('/').last,
         bytes: bytes,
       );
@@ -387,7 +390,8 @@ class _DocScreenState extends State<DocScreen> {
           ),
           const SizedBox(height: 8),
           FilledButton.icon(
-            onPressed: () => Share.shareXFiles([XFile(_outPath!)]),
+            onPressed: () => SharePlus.instance
+                .share(ShareParams(files: [XFile(_outPath!)])),
             icon: const Icon(Icons.send),
             label: const Text('카톡·문자·메일로 보내기', style: TextStyle(fontSize: 16)),
           ),

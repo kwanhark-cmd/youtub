@@ -162,8 +162,8 @@ void _setChild(XmlElement root, String qualified, String value,
   var e = _child(root, local);
   if (e == null) {
     e = XmlElement(
-      XmlName.fromString(qualified),
-      attrs.entries.map((a) => XmlAttribute(XmlName.fromString(a.key), a.value)),
+      XmlName.qualified(qualified),
+      attrs.entries.map((a) => XmlAttribute(XmlName.qualified(a.key), a.value)),
     );
     root.children.add(e);
   }

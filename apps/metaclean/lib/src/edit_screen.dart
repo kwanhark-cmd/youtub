@@ -453,7 +453,8 @@ class _EditScreenState extends State<EditScreen> {
         if (done) ...[
           const SizedBox(height: 8),
           FilledButton.icon(
-            onPressed: () => Share.shareXFiles(_outFiles),
+            onPressed: () =>
+                SharePlus.instance.share(ShareParams(files: _outFiles)),
             icon: const Icon(Icons.send),
             label: const Text('카톡·문자로 보내기', style: TextStyle(fontSize: 16)),
           ),

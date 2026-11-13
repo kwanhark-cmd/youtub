@@ -111,7 +111,7 @@ class _CleanScreenState extends State<CleanScreen> {
   Future<void> _share() async {
     final files = _cleanedFiles;
     if (files.isEmpty) return;
-    await Share.shareXFiles(files);
+    await SharePlus.instance.share(ShareParams(files: files));
   }
 
   Future<void> _saveAll() async {
