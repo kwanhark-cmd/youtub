@@ -10,6 +10,7 @@ import 'package:share_plus/share_plus.dart';
 
 import 'out_name.dart';
 import 'photo_gps.dart';
+import 'photo_library.dart';
 import 'photo_pick.dart';
 import 'strip.dart';
 
@@ -18,13 +19,13 @@ class CleanScreen extends StatefulWidget {
   const CleanScreen({
     super.key,
     this.pickPhotos = pickOriginalPhotos,
-    this.mediaLocation = const MediaLocationAccess(),
+    this.library = const PhotoLibrary(),
     this.tempDir = getTemporaryDirectory,
   });
 
-  /// 사진을 고르는 방법·위치 권한·임시 폴더 (테스트에서 바꿔 끼움).
+  /// 사진을 고르는 방법·사진 보관함·임시 폴더 (테스트에서 바꿔 끼움).
   final PickPhotos pickPhotos;
-  final MediaLocationAccess mediaLocation;
+  final PhotoLibrary library;
   final Future<Directory> Function() tempDir;
 
   @override
@@ -35,8 +36,12 @@ class _Item {
   _Item(this.name);
   final String name;
   int beforeCount = 0;
+
   /// 원본(받은 사진)의 위치 정보 상태. 좌표가 제대로 있을 때만 "제거됨"이라고 쓴다.
   GpsState gps = GpsState.none;
+
+  /// 원본의 좌표 (있을 때만). 제대로 읽었는지 보여 주려고 둔다.
+  ({double lat, double lng})? latLng;
   String? takenAt;
   String? cleanedPath;
   int afterCount = 0;
@@ -50,9 +55,8 @@ class _CleanScreenState extends State<CleanScreen> {
   bool _busy = false;
 
   Future<void> _pickAndClean() async {
-    await askMediaLocationOnce(context, widget.mediaLocation);
-    if (!mounted) return;
-    final files = await widget.pickPhotos(multiple: true);
+    final files =
+        await widget.pickPhotos(context, widget.library, multiple: true);
     if (files.isEmpty || !mounted) return;
     setState(() {
       _busy = true;
@@ -65,6 +69,7 @@ class _CleanScreenState extends State<CleanScreen> {
       try {
         final src = await f.read();
         item.gps = gpsStateOfBytes(src);
+        item.latLng = gpsLatLngOfBytes(src);
 
         // 1) 원본의 메타데이터 확인
         try {
@@ -167,7 +172,7 @@ class _CleanScreenState extends State<CleanScreen> {
           if (_items.any((it) => it.gps == GpsState.blank))
             GpsHiddenNotice(
               count: _items.where((it) => it.gps == GpsState.blank).length,
-              access: widget.mediaLocation,
+              library: widget.library,
               kind: GpsNoticeKind.clean,
             ),
           Expanded(
@@ -184,16 +189,22 @@ class _CleanScreenState extends State<CleanScreen> {
                       } else if (it.cleanedPath == null) {
                         sub.write('처리 중…');
                       } else {
-                        sub.write('메타데이터 ${it.beforeCount}개 → ${it.afterCount}개');
+                        sub.write(
+                            '메타데이터 ${it.beforeCount}개 → ${it.afterCount}개');
                         if (it.takenAt != null) {
                           sub.write(' · 원본 촬영일 ${it.takenAt}');
                         }
                         if (it.gps == GpsState.valid) {
-                          sub.write(' · 위치정보(GPS) 제거됨');
+                          final p = it.latLng;
+                          sub.write(p == null
+                              ? ' · 위치정보(GPS) 제거됨'
+                              : ' · 위치정보(GPS) 제거됨 (원본 위치 ${shortLatLng(p)})');
                         } else if (it.gps == GpsState.blank) {
                           sub.write(' · 받은 사진의 위치가 이미 가려져 있었음(원본 위치 확인 불가)');
                         }
-                        if (it.hiddenDataRemoved) sub.write(' · 숨은 데이터(모션포토) 제거됨');
+                        if (it.hiddenDataRemoved) {
+                          sub.write(' · 숨은 데이터(모션포토) 제거됨');
+                        }
                         if (it.reEncoded) sub.write(' · JPEG로 변환됨');
                       }
                       return ListTile(

@@ -7,10 +7,12 @@ import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 
+import 'app_theme.dart';
 import 'device_info.dart';
 import 'out_name.dart';
 import 'photo_edit.dart';
 import 'photo_gps.dart';
+import 'photo_library.dart';
 import 'photo_pick.dart';
 import 'plus_code.dart';
 
@@ -20,16 +22,16 @@ class EditScreen extends StatefulWidget {
     super.key,
     this.deviceLookup = currentDeviceName,
     this.pickPhotos = pickOriginalPhotos,
-    this.mediaLocation = const MediaLocationAccess(),
+    this.library = const PhotoLibrary(),
     this.tempDir = getTemporaryDirectory,
   });
 
   /// 지금 쓰는 폰의 제조사·기종을 알아내는 방법 (테스트에서 바꿔 끼움).
   final DeviceLookup deviceLookup;
 
-  /// 사진을 고르는 방법·위치 권한·임시 폴더 (테스트에서 바꿔 끼움).
+  /// 사진을 고르는 방법·사진 보관함·임시 폴더 (테스트에서 바꿔 끼움).
   final PickPhotos pickPhotos;
-  final MediaLocationAccess mediaLocation;
+  final PhotoLibrary library;
   final Future<Directory> Function() tempDir;
 
   @override
@@ -160,9 +162,8 @@ class _EditScreenState extends State<EditScreen> {
       lat = parsed.lat;
       lng = parsed.lng;
     }
-    await askMediaLocationOnce(context, widget.mediaLocation);
-    if (!mounted) return;
-    final files = await widget.pickPhotos(multiple: true);
+    final files =
+        await widget.pickPhotos(context, widget.library, multiple: true);
     if (files.isEmpty || !mounted) return;
     setState(() {
       _busy = true;
@@ -213,12 +214,15 @@ class _EditScreenState extends State<EditScreen> {
         // (이미 전부 지운 사진 등). 헷갈리지 않게 그렇게 적어 준다.
         String missing(bool kept) => kept ? '없음(원본에도 없음)' : '없음';
         final takenAt = tags['EXIF DateTimeOriginal']?.printable;
-        final hasGps = gpsStateOfBytes(r.bytes) == GpsState.valid;
+        final outGps = gpsLatLngOfBytes(r.bytes);
         // 폰이 위치를 가린 채 넘겨준 사진: "원본에도 없음"이 아니다.
         item.gpsHidden =
             _gps == GpsAction.keep && r.sourceGps == GpsState.blank;
-        final gpsText = hasGps
-            ? '있음'
+        // 실제로 들어간 좌표를 보여 줘서, 위치가 제대로 남았는지 눈으로 확인할 수 있게 한다.
+        final gpsText = outGps != null
+            ? (_gps == GpsAction.keep
+                ? '유지됨 (${shortLatLng(outGps)})'
+                : '바뀜 (${shortLatLng(outGps)})')
             : item.gpsHidden
                 ? '없음(폰이 위치를 가린 채 넘겨줌)'
                 : missing(_gps == GpsAction.keep);
@@ -276,13 +280,18 @@ class _EditScreenState extends State<EditScreen> {
                 const Text('촬영 날짜', style: TextStyle(fontSize: 16)),
                 const SizedBox(height: 8),
                 SegmentedButton<DateAction>(
+                  showSelectedIcon: false,
                   segments: const [
-                    ButtonSegment(value: DateAction.keep, label: Text('그대로')),
-                    ButtonSegment(value: DateAction.remove, label: Text('지우기')),
-                    ButtonSegment(value: DateAction.change, label: Text('바꾸기')),
+                    ButtonSegment(
+                        value: DateAction.keep, label: SegmentLabel('그대로')),
+                    ButtonSegment(
+                        value: DateAction.remove, label: SegmentLabel('지우기')),
+                    ButtonSegment(
+                        value: DateAction.change, label: SegmentLabel('바꾸기')),
                   ],
                   selected: {_dateAction},
-                  onSelectionChanged: (s) => setState(() => _dateAction = s.first),
+                  onSelectionChanged: (s) =>
+                      setState(() => _dateAction = s.first),
                 ),
                 if (_dateAction == DateAction.change) ...[
                   ListTile(
@@ -310,10 +319,14 @@ class _EditScreenState extends State<EditScreen> {
                 const Text('촬영 위치', style: TextStyle(fontSize: 16)),
                 const SizedBox(height: 8),
                 SegmentedButton<GpsAction>(
+                  showSelectedIcon: false,
                   segments: const [
-                    ButtonSegment(value: GpsAction.keep, label: Text('그대로')),
-                    ButtonSegment(value: GpsAction.remove, label: Text('지우기')),
-                    ButtonSegment(value: GpsAction.change, label: Text('바꾸기')),
+                    ButtonSegment(
+                        value: GpsAction.keep, label: SegmentLabel('그대로')),
+                    ButtonSegment(
+                        value: GpsAction.remove, label: SegmentLabel('지우기')),
+                    ButtonSegment(
+                        value: GpsAction.change, label: SegmentLabel('바꾸기')),
                   ],
                   selected: {_gps},
                   onSelectionChanged: (s) => setState(() => _gps = s.first),
@@ -349,13 +362,14 @@ class _EditScreenState extends State<EditScreen> {
                     style: TextStyle(fontSize: 16)),
                 const SizedBox(height: 8),
                 SegmentedButton<DeviceAction>(
+                  showSelectedIcon: false,
                   segments: const [
                     ButtonSegment(
-                        value: DeviceAction.keep, label: Text('그대로')),
+                        value: DeviceAction.keep, label: SegmentLabel('그대로')),
                     ButtonSegment(
-                        value: DeviceAction.remove, label: Text('지우기')),
+                        value: DeviceAction.remove, label: SegmentLabel('지우기')),
                     ButtonSegment(
-                        value: DeviceAction.change, label: Text('바꾸기')),
+                        value: DeviceAction.change, label: SegmentLabel('바꾸기')),
                   ],
                   selected: {_device},
                   onSelectionChanged: (s) => _onDeviceAction(s.first),
@@ -410,8 +424,7 @@ class _EditScreenState extends State<EditScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('설명 (정리·검색용, 선택)',
-                    style: TextStyle(fontSize: 16)),
+                const Text('설명 (정리·검색용, 선택)', style: TextStyle(fontSize: 16)),
                 const SizedBox(height: 4),
                 const Text(
                   '나중에 사진을 찾기 쉽도록 제목·설명·태그를 적어 둘 수 있어요. '
@@ -459,7 +472,7 @@ class _EditScreenState extends State<EditScreen> {
         if (_items.any((it) => it.gpsHidden))
           GpsHiddenNotice(
             count: _items.where((it) => it.gpsHidden).length,
-            access: widget.mediaLocation,
+            library: widget.library,
           ),
         for (final it in _items)
           ListTile(
@@ -469,9 +482,8 @@ class _EditScreenState extends State<EditScreen> {
                     width: 48, height: 48, fit: BoxFit.cover)
                 : const Icon(Icons.image),
             title: Text(it.name, overflow: TextOverflow.ellipsis),
-            subtitle: Text(it.error != null
-                ? '⚠️ ${it.error}'
-                : it.summary ?? '처리 중…'),
+            subtitle: Text(
+                it.error != null ? '⚠️ ${it.error}' : it.summary ?? '처리 중…'),
           ),
         if (done) ...[
           const SizedBox(height: 8),

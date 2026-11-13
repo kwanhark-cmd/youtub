@@ -219,3 +219,21 @@ class MetaTheme {
     );
   }
 }
+
+/// 나뉜 단추(SegmentedButton) 한 칸의 글자.
+///
+/// 좁은 폰(360dp)에서 글자를 크게 하면 "그대/로"처럼 두 줄로 꺾이던 것을 막는다:
+/// 늘 한 줄로 두고, 자리가 모자라면 글자를 조금 줄여 맞춘다.
+/// 고른 칸의 체크 표시는 쓰지 않는다 (SegmentedButton 의 showSelectedIcon: false) —
+/// 고른 칸은 채운 바탕색으로 충분히 구분되고, 체크가 글자 자리를 빼앗기 때문이다.
+class SegmentLabel extends StatelessWidget {
+  const SegmentLabel(this.text, {super.key});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) => FittedBox(
+        fit: BoxFit.scaleDown,
+        child: Text(text, maxLines: 1, softWrap: false),
+      );
+}

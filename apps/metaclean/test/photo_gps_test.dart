@@ -188,4 +188,24 @@ void main() {
     final lat = tags['GPS GPSLatitude']!.values.toList().cast<Ratio>();
     expect(lat.every((r) => r.denominator == 0), isTrue);
   });
+
+  group('gpsLatLngOfBytes: 결과 목록에 보여 줄 실제 좌표', () {
+    test('제대로 된 좌표를 읽고 짧게 적는다', () {
+      final p = gpsLatLngOfBytes(_validJpeg)!;
+      expect(p.lat, closeTo(37.2411, 1e-4));
+      expect(p.lng, closeTo(127.1776, 1e-4));
+      expect(shortLatLng(p), '37.24, 127.18');
+    });
+
+    test('남반구·서반구는 음수', () {
+      final p = gpsLatLngOfBytes(_jpg((e) => writeGps(e, -33.8688, -70.6693)))!;
+      expect(shortLatLng(p), '-33.87, -70.67');
+    });
+
+    test('가려진 좌표·위치 없음·사진이 아닌 것은 null', () {
+      expect(gpsLatLngOfBytes(_redactedJpeg), isNull);
+      expect(gpsLatLngOfBytes(_jpg((_) {})), isNull);
+      expect(gpsLatLngOfBytes(Uint8List.fromList([1, 2, 3])), isNull);
+    });
+  });
 }

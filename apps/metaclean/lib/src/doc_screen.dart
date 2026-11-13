@@ -7,6 +7,7 @@ import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 
+import 'app_theme.dart';
 import 'docs/doc_meta.dart';
 
 class _Job {
@@ -283,9 +284,10 @@ class _DocScreenState extends State<DocScreen> {
           ),
           const SizedBox(height: 8),
           SegmentedButton<bool>(
+            showSelectedIcon: false,
             segments: const [
-              ButtonSegment(value: false, label: Text('전부 지우기')),
-              ButtonSegment(value: true, label: Text('일부만 고치기')),
+              ButtonSegment(value: false, label: SegmentLabel('전부 지우기')),
+              ButtonSegment(value: true, label: SegmentLabel('일부만 고치기')),
             ],
             selected: {_editMode},
             onSelectionChanged: (s) => setState(() => _editMode = s.first),

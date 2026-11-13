@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:metaclean/main.dart';
 import 'package:metaclean/src/app_theme.dart';
@@ -175,6 +176,66 @@ void main() {
         expect(label.text.style!.fontWeight, FontWeight.w700);
       });
     }
+  }
+
+  // 사진 수정의 세 갈래 단추: 고른 칸에 체크 표시가 붙으며 "그대/로", "바꾸/기"처럼
+  // 두 줄로 꺾이던 문제 (360dp 폰). 한 줄로, 글자는 17 이상으로 보여야 한다.
+  for (final scale in [1.0, 1.15, 1.3, 1.5]) {
+    testWidgets('360 폭 · 글씨 $scale배: 나뉜 단추 글자가 두 줄로 꺾이지 않는다', (t) async {
+      // 폭은 좁은 폰(360)과 같게, 세 단추가 한꺼번에 보이도록 높이만 넉넉하게.
+      await t.binding.setSurfaceSize(const Size(360, 2400));
+      addTearDown(() => t.binding.setSurfaceSize(null));
+      t.platformDispatcher.textScaleFactorTestValue = scale;
+      addTearDown(t.platformDispatcher.clearTextScaleFactorTestValue);
+      await t.pumpWidget(MaterialApp(
+        theme: MetaTheme.build(),
+        home: Scaffold(body: EditScreen(deviceLookup: () async => null)),
+      ));
+      await t.pumpAndSettle();
+
+      Future<void> check() async {
+        final segs = find.byWidgetPredicate((w) => w is SegmentedButton);
+        expect(segs, findsNWidgets(3));
+        // 고른 칸에도 체크 표시가 없다
+        expect(find.descendant(of: segs, matching: find.byIcon(Icons.check)), findsNothing);
+        final labels = find.descendant(of: segs, matching: find.byType(SegmentLabel));
+        expect(labels, findsNWidgets(9));
+        for (final e in labels.evaluate()) {
+          final para = t.renderObject<RenderParagraph>(
+              find.descendant(of: find.byWidget(e.widget), matching: find.byType(RichText)).first);
+          final text = para.text.toPlainText();
+          final one = TextPainter(
+            text: para.text,
+            textDirection: TextDirection.ltr,
+            textScaler: para.textScaler,
+          )..layout();
+          // 한 줄 높이 그대로 (두 줄이면 두 배)
+          expect(para.size.height, closeTo(one.height, 0.5), reason: text);
+          expect(para.didExceedMaxLines, isFalse, reason: text);
+          // 칸에 맞추느라 줄였더라도 실제 글자는 17 이상
+          final box = e.renderObject as RenderBox;
+          final shrink = box.size.width / para.size.width;
+          final shown = MetaTheme.labelSize * scale * (shrink < 1 ? shrink : 1);
+          expect(shown, greaterThanOrEqualTo(MetaTheme.labelSize), reason: '$text ${shown.toStringAsFixed(1)}');
+          // 칸 밖으로 삐져나오지 않는다
+          final seg = t.getRect(find.ancestor(of: find.byWidget(e.widget), matching: find.byType(InkWell)).first);
+          final r = t.getRect(find.byWidget(e.widget));
+          expect(seg.left <= r.left + 0.5 && r.right <= seg.right + 0.5, isTrue, reason: text);
+        }
+      }
+
+      await check();
+      // 모두 "바꾸기"를 골라도 마찬가지
+      for (final type in [SegmentedButton<DateAction>, SegmentedButton<GpsAction>, SegmentedButton<DeviceAction>]) {
+        final seg = find.byType(type);
+        await t.ensureVisible(seg);
+        await t.pumpAndSettle();
+        await t.tap(find.descendant(of: seg, matching: find.text('바꾸기')));
+        await t.pumpAndSettle();
+      }
+      expect(t.takeException(), isNull);
+      await check();
+    });
   }
 
   testWidgets('360×740 · 1.5배: 앱 정보·업데이트 창도 넘치지 않는다', (t) async {

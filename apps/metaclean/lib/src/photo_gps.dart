@@ -45,6 +45,33 @@ GpsState gpsStateOfBytes(Uint8List bytes) {
   }
 }
 
+/// 사진 파일(바이트) 속 좌표. 쓸 수 있는 좌표가 없으면 null.
+({double lat, double lng})? gpsLatLngOfBytes(Uint8List bytes) {
+  try {
+    final isJpeg = bytes.length > 2 && bytes[0] == 0xFF && bytes[1] == 0xD8;
+    final exif =
+        isJpeg ? img.decodeJpgExif(bytes) : img.decodeImage(bytes)?.exif;
+    if (exif == null) return null;
+    return gpsLatLngOfExif(exif);
+  } catch (_) {
+    return null;
+  }
+}
+
+/// EXIF 묶음 속 좌표. 쓸 수 있는 좌표가 없으면 null. (아무것도 바꾸지 않는다)
+({double lat, double lng})? gpsLatLngOfExif(img.ExifData exif) {
+  if (gpsStateOfExif(exif) != GpsState.valid) return null;
+  final g = exif.gpsIfd;
+  final lat = _coord(g.data[0x0002], g.data[0x0001], 'N', 'S', 90);
+  final lng = _coord(g.data[0x0004], g.data[0x0003], 'E', 'W', 180);
+  if (lat == null || lng == null) return null;
+  return (lat: lat, lng: lng);
+}
+
+/// 화면에 보여 줄 짧은 좌표 글자. 예: 37.27, 127.15
+String shortLatLng(({double lat, double lng}) p) =>
+    '${p.lat.toStringAsFixed(2)}, ${p.lng.toStringAsFixed(2)}';
+
 /// 망가진(비어 있는) 위치 칸 묶음을 깨끗이 떼어 낸다. 떼어 냈으면 참.
 ///
 /// 좌표가 제대로 든 위치 정보는 건드리지 않는다.

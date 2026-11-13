@@ -12,6 +12,7 @@ import 'package:share_plus/share_plus.dart';
 import 'exif_utils.dart';
 import 'out_name.dart';
 import 'photo_gps.dart';
+import 'photo_library.dart';
 import 'photo_pick.dart';
 
 /// 구매용: 받은 사진에 날짜·물건·메모·위치 메타데이터를 기록해 보관한다.
@@ -19,12 +20,12 @@ class StampScreen extends StatefulWidget {
   const StampScreen({
     super.key,
     this.pickPhotos = pickOriginalPhotos,
-    this.mediaLocation = const MediaLocationAccess(),
+    this.library = const PhotoLibrary(),
   });
 
-  /// 사진을 고르는 방법·위치 권한 (테스트에서 바꿔 끼움).
+  /// 사진을 고르는 방법·사진 보관함 (테스트에서 바꿔 끼움).
   final PickPhotos pickPhotos;
-  final MediaLocationAccess mediaLocation;
+  final PhotoLibrary library;
 
   @override
   State<StampScreen> createState() => _StampScreenState();
@@ -40,6 +41,7 @@ class _StampScreenState extends State<StampScreen> {
 
   Uint8List? _picked;
   GpsState _gps = GpsState.none;
+  ({double lat, double lng})? _latLng;
   int _existingCount = 0;
   String? _existingDate;
   DateTime _date = DateTime.now();
@@ -57,9 +59,8 @@ class _StampScreenState extends State<StampScreen> {
   }
 
   Future<void> _pick() async {
-    await askMediaLocationOnce(context, widget.mediaLocation);
-    if (!mounted) return;
-    final picked = await widget.pickPhotos(multiple: false);
+    final picked =
+        await widget.pickPhotos(context, widget.library, multiple: false);
     if (picked.isEmpty || !mounted) return;
     final Uint8List bytes;
     try {
@@ -83,6 +84,7 @@ class _StampScreenState extends State<StampScreen> {
     setState(() {
       _picked = bytes;
       _gps = gpsStateOfBytes(bytes);
+      _latLng = gpsLatLngOfBytes(bytes);
       _existingCount = count;
       _existingDate = dateStr;
       _savedPath = null;
@@ -187,11 +189,15 @@ class _StampScreenState extends State<StampScreen> {
                         '${_existingDate != null ? " · 촬영일 $_existingDate" : ""}',
                 style: TextStyle(color: Theme.of(context).colorScheme.primary),
               ),
+              if (_latLng != null) ...[
+                const SizedBox(height: 4),
+                Text('사진 속 위치: ${shortLatLng(_latLng!)} (기록할 때 그대로 둬요)'),
+              ],
               if (_gps == GpsState.blank) ...[
                 const SizedBox(height: 8),
                 GpsHiddenNotice(
                   count: 1,
-                  access: widget.mediaLocation,
+                  library: widget.library,
                   kind: GpsNoticeKind.stamp,
                 ),
               ],
@@ -219,7 +225,8 @@ class _StampScreenState extends State<StampScreen> {
                   side: BorderSide(color: Theme.of(context).dividerColor),
                   borderRadius: BorderRadius.circular(4),
                 ),
-                title: Text('기록 날짜: ${DateFormat('yyyy년 M월 d일').format(_date)}'),
+                title:
+                    Text('기록 날짜: ${DateFormat('yyyy년 M월 d일').format(_date)}'),
                 trailing: const Icon(Icons.calendar_month),
                 onTap: _pickDate,
               ),
