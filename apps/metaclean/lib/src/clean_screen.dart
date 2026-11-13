@@ -143,13 +143,12 @@ class _CleanScreenState extends State<CleanScreen> {
           const Text(
             '중고 물건 사진을 고르면, 위치·날짜·기기 정보 등 모든 메타데이터를 지운 '
             '깨끗한 사본을 만들어요. 원본은 그대로 남습니다.',
-            style: TextStyle(fontSize: 15, height: 1.5),
           ),
           const SizedBox(height: 12),
           FilledButton.icon(
             onPressed: _busy ? null : _pickAndClean,
             icon: const Icon(Icons.photo_library),
-            label: const Text('사진 고르기 (여러 장 가능)', style: TextStyle(fontSize: 16)),
+            label: const Text('사진 고르기 (여러 장 가능)'),
           ),
           const SizedBox(height: 12),
           Expanded(
@@ -190,7 +189,7 @@ class _CleanScreenState extends State<CleanScreen> {
             FilledButton.icon(
               onPressed: _share,
               icon: const Icon(Icons.send),
-              label: const Text('카톡·문자로 보내기', style: TextStyle(fontSize: 16)),
+              label: const Text('카톡·문자로 보내기'),
             ),
             const SizedBox(height: 8),
             OutlinedButton.icon(

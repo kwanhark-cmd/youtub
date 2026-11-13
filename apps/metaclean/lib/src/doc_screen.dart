@@ -250,13 +250,12 @@ class _DocScreenState extends State<DocScreen> {
         const Text(
           '사용설명서 같은 문서에도 작성자 이름·회사·만든 날짜가 숨어 있어요. '
           'PDF, 한글(hwp·hwpx), 워드(docx·doc) 문서에서 지우거나 일부만 고친 사본을 만들어요.',
-          style: TextStyle(fontSize: 15, height: 1.5),
         ),
         const SizedBox(height: 12),
         FilledButton.icon(
           onPressed: _busy ? null : _pick,
           icon: const Icon(Icons.description),
-          label: const Text('문서 고르기', style: TextStyle(fontSize: 16)),
+          label: const Text('문서 고르기'),
         ),
         if (_busy) ...[
           const SizedBox(height: 12),
@@ -360,8 +359,7 @@ class _DocScreenState extends State<DocScreen> {
           FilledButton.icon(
             onPressed: _busy ? null : _run,
             icon: const Icon(Icons.cleaning_services),
-            label: Text(_editMode ? '고친 사본 만들기' : '깨끗한 사본 만들기',
-                style: const TextStyle(fontSize: 16)),
+            label: Text(_editMode ? '고친 사본 만들기' : '깨끗한 사본 만들기'),
           ),
         ],
         if (_outPath != null) ...[
@@ -393,7 +391,7 @@ class _DocScreenState extends State<DocScreen> {
             onPressed: () => SharePlus.instance
                 .share(ShareParams(files: [XFile(_outPath!)])),
             icon: const Icon(Icons.send),
-            label: const Text('카톡·문자·메일로 보내기', style: TextStyle(fontSize: 16)),
+            label: const Text('카톡·문자·메일로 보내기'),
           ),
           const SizedBox(height: 8),
           OutlinedButton.icon(

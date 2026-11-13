@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'src/app_theme.dart';
 import 'src/app_version.dart';
 import 'src/clean_screen.dart';
 import 'src/doc_screen.dart';
@@ -37,10 +38,8 @@ class MetaCleanApp extends StatelessWidget {
     return MaterialApp(
       title: '메타지우개 플러스',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF2F6BFF)),
-        useMaterial3: true,
-      ),
+      // 잘 보이는 테마 (단추 52·글자 17 굵게·명암비 7:1·2px 테두리). 화면마다 따로 정하지 않는다.
+      theme: MetaTheme.build(),
       home: _Home(
         currentBuild: currentBuild,
         currentVersion: currentVersion,

@@ -241,7 +241,6 @@ class _EditScreenState extends State<EditScreen> {
         const Text(
           '사진 정보를 전부 지우지 않고 날짜·위치·촬영 기기 중 고른 것만 바꿔요. '
           '나머지 정보와 화질은 그대로 두고, 사본을 새로 만듭니다.',
-          style: TextStyle(fontSize: 15, height: 1.5),
         ),
         const SizedBox(height: 12),
         Card(
@@ -272,7 +271,6 @@ class _EditScreenState extends State<EditScreen> {
                   const Text(
                     '인화·현상된 옛 사진을 찍었다면, 그 사진의 실제 날짜로 지정해 두면 '
                     '갤러리에서 제 날짜에 정리돼요. (오늘 찍은 날짜 대신 원하는 날짜가 들어갑니다.)',
-                    style: TextStyle(fontSize: 12),
                   ),
                 ],
               ],
@@ -311,7 +309,6 @@ class _EditScreenState extends State<EditScreen> {
                     '구글 지도에서 원하는 곳을 길게 누른 뒤, 아래에 뜨는 좌표나 '
                     '플러스코드(예: 75W2+4PV 용인)를 그대로 복사해 붙여넣으세요. '
                     '짧은 플러스코드는 뒤에 도시 이름이 있어야 풀 수 있어요.',
-                    style: TextStyle(fontSize: 12),
                   ),
                 ],
               ],
@@ -377,7 +374,6 @@ class _EditScreenState extends State<EditScreen> {
                   const Text(
                     '지금 쓰는 폰의 제조사·기종이 자동으로 들어가요. 다른 기기로 적고 싶으면 '
                     '고쳐 쓰면 됩니다. (필름 카메라로 찍어 스캔한 사진이면 예: Canon AE-1)',
-                    style: TextStyle(fontSize: 12),
                   ),
                 ],
               ],
@@ -396,7 +392,6 @@ class _EditScreenState extends State<EditScreen> {
                 const Text(
                   '나중에 사진을 찾기 쉽도록 제목·설명·태그를 적어 둘 수 있어요. '
                   '한글도 안전하게 저장되고, 갤러리·사진 앱에서 검색에 쓰입니다.',
-                  style: TextStyle(fontSize: 12),
                 ),
                 const SizedBox(height: 10),
                 TextField(
@@ -434,8 +429,7 @@ class _EditScreenState extends State<EditScreen> {
         FilledButton.icon(
           onPressed: _busy ? null : _run,
           icon: const Icon(Icons.photo_library),
-          label: const Text('사진 고르고 수정하기 (여러 장 가능)',
-              style: TextStyle(fontSize: 16)),
+          label: const Text('사진 고르고 수정하기 (여러 장 가능)'),
         ),
         const SizedBox(height: 8),
         for (final it in _items)
@@ -456,7 +450,7 @@ class _EditScreenState extends State<EditScreen> {
             onPressed: () =>
                 SharePlus.instance.share(ShareParams(files: _outFiles)),
             icon: const Icon(Icons.send),
-            label: const Text('카톡·문자로 보내기', style: TextStyle(fontSize: 16)),
+            label: const Text('카톡·문자로 보내기'),
           ),
           const SizedBox(height: 8),
           OutlinedButton.icon(

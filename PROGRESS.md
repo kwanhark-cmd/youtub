@@ -34,6 +34,13 @@ cd packages/<모듈> && flutter test
 - core: ModuleId.metaclean(청록·🧹), 음성 낱말, 브리핑 순서 / 본체: MetacleanModule, 타일 아이콘 camera.png
 - 안드로이드 매니페스트: WRITE_EXTERNAL_STORAGE maxSdkVersion 28 (gal) / iOS·맥 Info.plist: NSPhotoLibraryAddUsageDescription
 - build.yml 검사·테스트 작업에 metaclean pub get·analyze·test 추가 (metaclean.yml 은 그대로)
+- 잘 보이게 (1.1.0 안, 메타지우개 2.3.0): 테마 한 곳에서만 고침 — 개인비서 `packages/core/lib/src/theme.dart`
+  (`AssistantTheme.build`·`scheme`·`danger`, `contrastRatio`·`ensureContrast`), 메타지우개 `apps/metaclean/lib/src/app_theme.dart` (`MetaTheme.build`).
+  규칙: 단추 높이 52·글자 17 w700·누르는 자리 48, 채운 단추 명암비 7:1 (눌렀을 때 덮는 색도 7:1 유지하는 쪽으로 자동 선택),
+  테두리 단추 2px, 초점 3px, 본문 16 이상·글자색 7:1, 나뉜 단추 고른 칸 진한 바탕. 시험: core `test/theme_test.dart`,
+  본체 `test/visibility_test.dart` (4 테마 × 3 글씨 크기 × 360 너비), metaclean `test/theme_test.dart` (360×740, 1.0·1.25·1.5배).
+  화면 쪽은 테마를 가리던 글자 크기 지정(단추 16·설명 12·15)만 지움. 채널·대화·비우기·금고 모듈은 각자 테마라 손대지 않음.
+  FilledButton.tonal 도 테마가 채운 단추와 같은 진한 바탕을 줌 (연결 상태 "conn-keys", 열쇠 화면 "콘솔 바로가기").
 - 남은 확인: 실제 안드로이드에서 개인비서 안 메타지우개 사진 고르기·갤러리 저장·공유, 윈도우 빌드(gal 윈도우 플러그인), metaclean 단독 apk 빌드 (이 환경엔 안드로이드 SDK 없음 → CI 에서)
 
 ## 설치·새 버전 (열쇠 없이) — 끝난 것

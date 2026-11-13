@@ -144,13 +144,12 @@ class _StampScreenState extends State<StampScreen> {
             const Text(
               '판매자에게 받은 사진에 받은 날짜·물건 이름·메모·위치를 기록해 두면, '
               '나중에 언제 어떤 물건이었는지 찾기 쉬워요.',
-              style: TextStyle(fontSize: 15, height: 1.5),
             ),
             const SizedBox(height: 12),
             FilledButton.icon(
               onPressed: _busy ? null : _pick,
               icon: const Icon(Icons.image_search),
-              label: const Text('받은 사진 고르기', style: TextStyle(fontSize: 16)),
+              label: const Text('받은 사진 고르기'),
             ),
             if (_picked != null) ...[
               const SizedBox(height: 12),
@@ -235,7 +234,7 @@ class _StampScreenState extends State<StampScreen> {
               FilledButton.icon(
                 onPressed: _busy ? null : _save,
                 icon: const Icon(Icons.verified),
-                label: const Text('기록 새겨서 보관하기', style: TextStyle(fontSize: 16)),
+                label: const Text('기록 새겨서 보관하기'),
               ),
               if (_savedPath != null) ...[
                 const SizedBox(height: 8),

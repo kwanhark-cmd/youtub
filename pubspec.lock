@@ -779,7 +779,7 @@ packages:
       path: "apps/metaclean"
       relative: true
     source: path
-    version: "2.2.0+1"
+    version: "2.3.0+1"
   mime:
     dependency: transitive
     description:
