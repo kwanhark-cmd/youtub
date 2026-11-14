@@ -67,10 +67,17 @@ class VoiceCommand {
 /// 모듈 답. [speak]는 소리로 읽을 말 (비밀번호는 넣지 않는다).
 /// [needsConfirm]이 참이면 실행 전에 "정말 할까요?"를 묻는다.
 class ModuleReply {
-  const ModuleReply(this.speak, {this.needsConfirm = false, this.openModule = false});
+  const ModuleReply(this.speak, {this.needsConfirm = false, this.openModule = false, this.confirmText, this.onConfirm});
   final String speak;
   final bool needsConfirm;
   final bool openModule;
+
+  /// 자료를 바꾸는 명령: 음성 창이 "[confirmText] 할까요?"를 묻고, "네"를 누르면 [onConfirm]을 실행한다.
+  /// [onConfirm]은 실행 결과를 소리로 읽을 말로 돌려준다. "아니요"면 아무것도 바뀌지 않는다.
+  final String? confirmText;
+  final Future<String> Function()? onConfirm;
+
+  bool get hasAction => onConfirm != null;
 }
 
 /// 본체 앱이 각 모듈과 이야기하는 규격.
