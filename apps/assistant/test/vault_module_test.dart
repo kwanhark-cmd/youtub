@@ -8,6 +8,7 @@ import 'package:account_vault/core/vault/vault.dart';
 import 'package:account_vault/data/models.dart';
 import 'package:assistant_core/assistant_core.dart';
 import 'package:flutter_test/flutter_test.dart';
+
 import 'package:personal_assistant/modules/vault_module.dart';
 
 import 'support.dart';
@@ -285,5 +286,22 @@ void main() {
     expect(c.hostedByAssistant, isFalse, reason: '직접 만든 컨트롤러는 단독 앱 기본값');
     final hosted = hostedVaultController(c.services, kdf: KdfParams.fastForTests);
     expect(hosted.hostedByAssistant, isTrue);
+  });
+
+  test('개인비서 보기 설정이 열 때 넘어감 (마스터 비밀번호 마법사는 그대로)', () async {
+    m.s.settings
+      ..textSize = TextSize.huge
+      ..themeMode = 'light'
+      ..reduceMotion = true;
+    await m.open();
+    expect(c.settings.textScaleLevel, 2);
+    expect(c.settings.themeMode, 'light');
+    expect(c.settings.reduceMotion, isTrue);
+    m.s.settings
+      ..textSize = TextSize.normal
+      ..highContrast = true;
+    await m.open();
+    expect(c.settings.textScaleLevel, 0);
+    expect(c.settings.themeMode, 'contrast');
   });
 }

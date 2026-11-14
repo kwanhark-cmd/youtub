@@ -12,6 +12,7 @@ import 'package:path/path.dart' as p;
 import '../app/assistant_state.dart';
 import '../app/keys.dart';
 import 'lazy.dart';
+import 'look_sync.dart';
 
 /// 4번 "물건 비우기" 모듈. 자료는 모듈 그대로(binugi DB)이고, 여기서는 읽어서 홈·검색·음성·연결에 보여 준다.
 /// 판매·폐기 확정은 모듈 화면에서만 한다(여기서 바로 바꾸지 않는다). 당근·번개에 자동으로 올리지 않는다.
@@ -30,6 +31,7 @@ class DeclutterModule extends PackagedModule {
   Future<Widget> open() async {
     final st = await lazy.get();
     await syncSharedKeys(st);
+    await applyLookToDeclutter(st, s.settings);
     return declutterApp(st);
   }
 
