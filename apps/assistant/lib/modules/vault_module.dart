@@ -89,9 +89,21 @@ class VaultModule extends PackagedModule {
     final r = _voice.handle(cmd.text, d, c.now());
     // VoiceAssistant 가 이미 비밀번호를 걸러 주지만 한 번 더 확인한다.
     final speak = _containsSecret(r.text, d) ? passwordRefusal : r.text;
-    if (r.action != null) {
-      // 바꾸는 명령(만료일 등록·해지 후보)은 여기서 실행하지 않고 금고 화면에서 직접 확인한다.
-      return ModuleReply('$speak 금고 화면에서 확인해 주세요.', needsConfirm: true, openModule: true);
+    final action = r.action;
+    if (action != null) {
+      // 바꾸는 명령(만료일 등록·해지 후보): 음성 창이 한 번 더 묻고, "네"일 때만 금고의 보통 저장으로 바꾼다.
+      return ModuleReply(
+        speak,
+        needsConfirm: true,
+        confirmText: action.description,
+        onConfirm: () async {
+          final now = _open; // 묻는 사이 잠겼으면 바꾸지 않는다
+          if (now == null) return '금고가 잠겨서 바꾸지 않았어요. 금고를 열고 다시 말해 주세요.';
+          await now.mutate(action.apply);
+          CoreLog.info('금고: 음성 명령 확인 후 처리');
+          return '네, 처리했어요.';
+        },
+      );
     }
     if (r.intent == VoiceIntent.passwordRequest) return ModuleReply(speak, openModule: true);
     return ModuleReply(speak);

@@ -40,10 +40,13 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _refresh() async {
+    final sw = Stopwatch()..start();
     final s = widget.state;
     final today = <ModuleId, List<TodayItem>>{};
     final status = <ModuleId, String>{};
+    final each = <String>[];
     await Future.wait(s.modules.all.map((m) async {
+      final one = Stopwatch()..start();
       try {
         today[m.id] = await m.today().timeout(const Duration(seconds: 8));
       } catch (e) {
@@ -54,7 +57,9 @@ class _HomeScreenState extends State<HomeScreen> {
       } catch (_) {
         status[m.id] = '눌러서 열기';
       }
+      each.add('${m.id.title} ${one.elapsedMilliseconds}ms');
     }));
+    CoreLog.info('오늘 할 일 모으기 ${sw.elapsedMilliseconds}ms (${each.join(', ')})');
     // 구글 "테스트" 앱 연결은 7일마다 만료: 3일 전부터 알려 준다
     try {
       final left = await SharedKeys(s.secrets).googleDaysLeft();

@@ -112,7 +112,7 @@ class _VoiceSheetState extends State<VoiceSheet> {
   Future<void> _reply(String msg) async {
     if (!mounted) return;
     setState(() => _answer = msg);
-    await Speaker.say(msg);
+    unawaited(Speaker.say(msg)); // 읽는 동안에도 다음 질문(확인 창)을 바로 보여 준다
   }
 
   Future<void> _run(String said, {ModuleId? forced}) async {
@@ -157,6 +157,29 @@ class _VoiceSheetState extends State<VoiceSheet> {
       rep = await s.modules.of(id).handle(VoiceCommand(said, intent: r.intent)).timeout(const Duration(seconds: 15));
     } catch (e) {
       CoreLog.warn('${id.title} 명령 실패: $e');
+    }
+    if (rep != null && rep.hasAction) {
+      final act = rep;
+      await _reply(act.speak);
+      if (!mounted) return;
+      final ok = await showDialog<bool>(
+        context: context,
+        builder: (c) => AlertDialog(
+          title: const Text('정말 할까요?'),
+          content: Text(act.confirmText ?? said),
+          actions: [
+            TextButton(key: const Key('voice-confirm-no'), onPressed: () => Navigator.pop(c, false), child: const Text('아니요')),
+            FilledButton(key: const Key('voice-confirm-yes'), onPressed: () => Navigator.pop(c, true), child: const Text('네, 할게요')),
+          ],
+        ),
+      );
+      if (ok != true) return _reply('취소했어요. 아무것도 바꾸지 않았어요.');
+      try {
+        return await _reply(await act.onConfirm!());
+      } catch (e) {
+        CoreLog.error('${id.title} 음성 명령 실행 실패', e);
+        return _reply('처리하지 못했어요. ${id.title} 화면에서 직접 해 주세요.');
+      }
     }
     if (rep != null) {
       await _reply(rep.speak);

@@ -249,6 +249,19 @@ void main() {
     expect(change!.needsConfirm, isTrue);
     expect(c.data.subscriptions.firstWhere((s) => s.serviceName == '넷플릭스').isCancelCandidate, isFalse, reason: '확인 전엔 바꾸지 않음');
     expectNoSecrets([money.speak, credit.speak, pw.speak, change.speak]);
+    expect(change.hasAction, isTrue);
+    expect(change.confirmText, contains('넷플릭스'));
+    expect(await change.onConfirm!(), '네, 처리했어요.');
+    expect(c.data.subscriptions.firstWhere((s) => s.serviceName == '넷플릭스').isCancelCandidate, isTrue, reason: '"네" 뒤에만 바뀜');
+  });
+
+  test('음성으로 바꾸기: 묻는 사이 금고가 잠기면 바꾸지 않는다', () async {
+    await c.createProfile('테스트', fakeMaster);
+    await fill(c);
+    await m.lazy.get();
+    final change = await m.handle(const VoiceCommand('넷플릭스 해지 후보에 넣어'));
+    await c.lock();
+    expect(await change!.onConfirm!(), contains('잠겨서 바꾸지 않았어요'));
   });
 
   test('하드 → 금고: 영수증을 구독 메모에 근거 문서로 붙이고, 잠금 후에도 남는다', () async {
