@@ -7,6 +7,7 @@ import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 
+import 'app_theme.dart';
 import 'docs/doc_meta.dart';
 
 class _Job {
@@ -74,12 +75,15 @@ class _DocScreenState extends State<DocScreen> {
   }
 
   Future<void> _pick() async {
-    final res = await FilePicker.platform.pickFiles(withData: true);
-    if (res == null || res.files.isEmpty) return;
-    final f = res.files.first;
-    var bytes = f.bytes;
-    if (bytes == null && f.path != null) {
-      bytes = await File(f.path!).readAsBytes();
+    final files = await FilePicker.pickFiles();
+    if (files.isEmpty) return;
+    final f = files.first;
+    Uint8List? bytes;
+    try {
+      bytes = await f.readAsBytes();
+    } catch (_) {
+      final path = f.path;
+      if (path != null) bytes = await File(path).readAsBytes();
     }
     if (!mounted) return;
     if (bytes == null) {
@@ -187,7 +191,7 @@ class _DocScreenState extends State<DocScreen> {
     final bytes = _outBytes;
     if (path == null || bytes == null) return;
     try {
-      final saved = await FilePicker.platform.saveFile(
+      final saved = await FilePicker.saveFile(
         fileName: path.split('/').last,
         bytes: bytes,
       );
@@ -247,13 +251,12 @@ class _DocScreenState extends State<DocScreen> {
         const Text(
           '사용설명서 같은 문서에도 작성자 이름·회사·만든 날짜가 숨어 있어요. '
           'PDF, 한글(hwp·hwpx), 워드(docx·doc) 문서에서 지우거나 일부만 고친 사본을 만들어요.',
-          style: TextStyle(fontSize: 15, height: 1.5),
         ),
         const SizedBox(height: 12),
         FilledButton.icon(
           onPressed: _busy ? null : _pick,
           icon: const Icon(Icons.description),
-          label: const Text('문서 고르기', style: TextStyle(fontSize: 16)),
+          label: const Text('문서 고르기'),
         ),
         if (_busy) ...[
           const SizedBox(height: 12),
@@ -281,9 +284,10 @@ class _DocScreenState extends State<DocScreen> {
           ),
           const SizedBox(height: 8),
           SegmentedButton<bool>(
+            showSelectedIcon: false,
             segments: const [
-              ButtonSegment(value: false, label: Text('전부 지우기')),
-              ButtonSegment(value: true, label: Text('일부만 고치기')),
+              ButtonSegment(value: false, label: SegmentLabel('전부 지우기')),
+              ButtonSegment(value: true, label: SegmentLabel('일부만 고치기')),
             ],
             selected: {_editMode},
             onSelectionChanged: (s) => setState(() => _editMode = s.first),
@@ -357,8 +361,7 @@ class _DocScreenState extends State<DocScreen> {
           FilledButton.icon(
             onPressed: _busy ? null : _run,
             icon: const Icon(Icons.cleaning_services),
-            label: Text(_editMode ? '고친 사본 만들기' : '깨끗한 사본 만들기',
-                style: const TextStyle(fontSize: 16)),
+            label: Text(_editMode ? '고친 사본 만들기' : '깨끗한 사본 만들기'),
           ),
         ],
         if (_outPath != null) ...[
@@ -387,9 +390,10 @@ class _DocScreenState extends State<DocScreen> {
           ),
           const SizedBox(height: 8),
           FilledButton.icon(
-            onPressed: () => Share.shareXFiles([XFile(_outPath!)]),
+            onPressed: () => SharePlus.instance
+                .share(ShareParams(files: [XFile(_outPath!)])),
             icon: const Icon(Icons.send),
-            label: const Text('카톡·문자·메일로 보내기', style: TextStyle(fontSize: 16)),
+            label: const Text('카톡·문자·메일로 보내기'),
           ),
           const SizedBox(height: 8),
           OutlinedButton.icon(

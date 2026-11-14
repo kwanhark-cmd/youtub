@@ -115,6 +115,10 @@ class SettingsScreen extends StatelessWidget {
             ]),
             group('계정', [
               ListTile(
+                key: const Key('settings-logout'),
+                // 나가기는 빨강으로 분명하게
+                textColor: Theme.of(context).colorScheme.error,
+                iconColor: Theme.of(context).colorScheme.error,
                 leading: const Icon(Icons.logout),
                 title: Text('${state.user?.name ?? ''} 로그아웃'),
                 onTap: () async {

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'src/app_theme.dart';
 import 'src/app_version.dart';
 import 'src/clean_screen.dart';
 import 'src/doc_screen.dart';
@@ -17,7 +18,12 @@ class MetaCleanApp extends StatelessWidget {
     this.currentVersion = appVersion,
     this.updateFetch = httpFetch,
     this.openUrl = openInBrowser,
+    this.hostedByAssistant = false,
   });
+
+  /// 개인비서(통합 앱) 안에서 열렸는지. 켜면 이 앱의 업데이트 확인·띠·ⓘ 업데이트 창을 모두 숨긴다
+  /// (업데이트는 개인비서 설정 하나로). 단독 앱은 늘 꺼져 있다.
+  final bool hostedByAssistant;
 
   /// 지금 설치된 앱의 빌드 번호·버전. (테스트에서 바꿔 넣는다)
   final int currentBuild;
@@ -32,15 +38,14 @@ class MetaCleanApp extends StatelessWidget {
     return MaterialApp(
       title: '메타지우개 플러스',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF2F6BFF)),
-        useMaterial3: true,
-      ),
+      // 잘 보이는 테마 (단추 52·글자 17 굵게·명암비 7:1·2px 테두리). 화면마다 따로 정하지 않는다.
+      theme: MetaTheme.build(),
       home: _Home(
         currentBuild: currentBuild,
         currentVersion: currentVersion,
         updateFetch: updateFetch,
         openUrl: openUrl,
+        hostedByAssistant: hostedByAssistant,
       ),
     );
   }
@@ -52,12 +57,14 @@ class _Home extends StatefulWidget {
     required this.currentVersion,
     required this.updateFetch,
     required this.openUrl,
+    required this.hostedByAssistant,
   });
 
   final int currentBuild;
   final String currentVersion;
   final UpdateFetch updateFetch;
   final UrlOpener openUrl;
+  final bool hostedByAssistant;
 
   @override
   State<_Home> createState() => _HomeState();
@@ -72,7 +79,8 @@ class _HomeState extends State<_Home> {
   void initState() {
     super.initState();
     // 정식으로 만든 앱(빌드 번호가 있는 앱)만 켤 때 한 번 조용히 확인한다.
-    if (widget.currentBuild > 0) _checkQuietly();
+    // 개인비서 안에서는 확인하지 않는다.
+    if (!widget.hostedByAssistant && widget.currentBuild > 0) _checkQuietly();
   }
 
   Future<void> _checkQuietly() async {
@@ -97,18 +105,20 @@ class _HomeState extends State<_Home> {
 
   @override
   Widget build(BuildContext context) {
-    final newer = _later ? null : _found?.info;
+    final hosted = widget.hostedByAssistant;
+    final newer = (hosted || _later) ? null : _found?.info;
     return DefaultTabController(
       length: 4,
       child: Scaffold(
         appBar: AppBar(
           title: const Text('메타지우개 플러스'),
           actions: [
-            IconButton(
-              onPressed: _openUpdateDialog,
-              tooltip: '앱 정보·업데이트',
-              icon: const Icon(Icons.info_outline),
-            ),
+            if (!hosted)
+              IconButton(
+                onPressed: _openUpdateDialog,
+                tooltip: '앱 정보·업데이트',
+                icon: const Icon(Icons.info_outline),
+              ),
           ],
           bottom: const TabBar(
             labelPadding: EdgeInsets.symmetric(horizontal: 4),

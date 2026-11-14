@@ -7,7 +7,7 @@ import 'package:path/path.dart' as p;
 import '../modules/registry.dart';
 
 /// pubspec.yaml 의 version 과 같아야 한다 (test/version_test.dart 가 확인).
-const appVersion = '1.0.0';
+const appVersion = '1.1.2';
 const releaseRepo = 'kwanhark-cmd/youtub';
 
 /// 공개 내려받기 페이지 (로그인 없이 열림).
@@ -16,7 +16,7 @@ const releasePage = 'https://github.com/$releaseRepo/releases/latest';
 /// Releases 에 올리는 안드로이드 설치 파일 이름 (.github/workflows/build.yml 과 같음).
 const androidAsset = 'gaein-biseo-android.apk';
 
-/// 본체 앱 전체 상태: 설정 하나, 로그인 하나, 모듈 다섯, 제안함 하나.
+/// 본체 앱 전체 상태: 설정 하나, 로그인 하나, 모듈 여섯, 제안함 하나.
 class AssistantState extends ChangeNotifier {
   AssistantState({required this.root, required this.secrets, ModuleRegistry? modules})
       : settings = AppSettings(File(p.join(root.path, 'assistant', 'settings.json'))),

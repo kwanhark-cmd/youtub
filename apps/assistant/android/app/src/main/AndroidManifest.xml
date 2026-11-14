@@ -1,5 +1,5 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
-    <!-- 다섯 모듈이 쓰던 권한을 모음 -->
+    <!-- 여섯 모듈(다섯 앱 + 메타지우개 플러스)이 쓰던 권한을 모음 -->
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.CAMERA"/>
     <uses-permission android:name="android.permission.RECORD_AUDIO"/>
@@ -10,6 +10,16 @@
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES"/>
     <uses-permission android:name="android.permission.BLUETOOTH" android:maxSdkVersion="30"/>
     <uses-permission android:name="android.permission.BLUETOOTH_CONNECT"/>
+    <!-- 메타지우개 플러스: 옛 안드로이드(9 이하)에서 사진을 갤러리에 저장 (gal). 단독 앱과 같은 값 -->
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="28"/>
+    <!-- 메타지우개 플러스: 사진을 원본 그대로(촬영 위치 포함) 읽기. 앱 안 고르기 화면이 폰의 사진 보관함에서 직접 읽는다
+         (photo_manager, setRequireOriginal). 시스템 고르기 창은 위치를 가려서 넘겨준다. 단독 앱과 같은 값.
+         READ_MEDIA_IMAGES: 사진 보기(13+), READ_MEDIA_VISUAL_USER_SELECTED: 14+ "일부 사진만 허용",
+         READ_EXTERNAL_STORAGE: 사진 보기(12 이하), ACCESS_MEDIA_LOCATION: 사진 속 위치를 가리지 않고 읽기(10+) -->
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32"/>
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES"/>
+    <uses-permission android:name="android.permission.READ_MEDIA_VISUAL_USER_SELECTED"/>
+    <uses-permission android:name="android.permission.ACCESS_MEDIA_LOCATION"/>
     <application
         android:label="개인비서"
         android:usesCleartextTraffic="true"

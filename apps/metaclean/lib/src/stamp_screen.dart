@@ -5,24 +5,34 @@ import 'package:exif/exif.dart';
 import 'package:flutter/material.dart';
 import 'package:gal/gal.dart';
 import 'package:image/image.dart' as img;
-import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 
+import 'exif_repair.dart';
 import 'exif_utils.dart';
 import 'out_name.dart';
+import 'photo_gps.dart';
+import 'photo_library.dart';
+import 'photo_pick.dart';
 
 /// 구매용: 받은 사진에 날짜·물건·메모·위치 메타데이터를 기록해 보관한다.
 class StampScreen extends StatefulWidget {
-  const StampScreen({super.key});
+  const StampScreen({
+    super.key,
+    this.pickPhotos = pickOriginalPhotos,
+    this.library = const PhotoLibrary(),
+  });
+
+  /// 사진을 고르는 방법·사진 보관함 (테스트에서 바꿔 끼움).
+  final PickPhotos pickPhotos;
+  final PhotoLibrary library;
 
   @override
   State<StampScreen> createState() => _StampScreenState();
 }
 
 class _StampScreenState extends State<StampScreen> {
-  final _picker = ImagePicker();
   final _formKey = GlobalKey<FormState>();
   final _itemCtrl = TextEditingController();
   final _memoCtrl = TextEditingController();
@@ -30,7 +40,9 @@ class _StampScreenState extends State<StampScreen> {
   final _latCtrl = TextEditingController();
   final _lngCtrl = TextEditingController();
 
-  XFile? _picked;
+  Uint8List? _picked;
+  GpsState _gps = GpsState.none;
+  ({double lat, double lng})? _latLng;
   int _existingCount = 0;
   String? _existingDate;
   DateTime _date = DateTime.now();
@@ -48,18 +60,32 @@ class _StampScreenState extends State<StampScreen> {
   }
 
   Future<void> _pick() async {
-    final f = await _picker.pickImage(source: ImageSource.gallery);
-    if (f == null) return;
+    final picked =
+        await widget.pickPhotos(context, widget.library, multiple: false);
+    if (picked.isEmpty || !mounted) return;
+    final Uint8List bytes;
+    try {
+      bytes = await picked.first.read();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('사진을 읽지 못했어요: $e')));
+      }
+      return;
+    }
     var count = 0;
     String? dateStr;
     try {
-      final tags = await readExifFromBytes(await f.readAsBytes());
+      final tags = await readExifFromBytes(bytes);
       count = tags.length;
       dateStr = tags['EXIF DateTimeOriginal']?.printable ??
           tags['Image DateTime']?.printable;
     } catch (_) {}
+    if (!mounted) return;
     setState(() {
-      _picked = f;
+      _picked = bytes;
+      _gps = gpsStateOfBytes(bytes);
+      _latLng = gpsLatLngOfBytes(bytes);
       _existingCount = count;
       _existingDate = dateStr;
       _savedPath = null;
@@ -86,8 +112,7 @@ class _StampScreenState extends State<StampScreen> {
     if (picked == null || !_formKey.currentState!.validate()) return;
     setState(() => _busy = true);
     try {
-      final bytes = await picked.readAsBytes();
-      final decoded = img.decodeImage(bytes);
+      final decoded = img.decodeImage(picked);
       if (decoded == null) {
         throw '지원하지 않는 사진 형식이에요';
       }
@@ -102,7 +127,8 @@ class _StampScreenState extends State<StampScreen> {
         lat: lat,
         lng: lng,
       );
-      final out = Uint8List.fromList(img.encodeJpg(decoded, quality: 95));
+      final out = repairJpegExif(
+          Uint8List.fromList(img.encodeJpg(decoded, quality: 95)));
 
       final dir = await getApplicationDocumentsDirectory();
       final name = safeFileName(_itemCtrl.text);
@@ -144,20 +170,18 @@ class _StampScreenState extends State<StampScreen> {
             const Text(
               '판매자에게 받은 사진에 받은 날짜·물건 이름·메모·위치를 기록해 두면, '
               '나중에 언제 어떤 물건이었는지 찾기 쉬워요.',
-              style: TextStyle(fontSize: 15, height: 1.5),
             ),
             const SizedBox(height: 12),
             FilledButton.icon(
               onPressed: _busy ? null : _pick,
               icon: const Icon(Icons.image_search),
-              label: const Text('받은 사진 고르기', style: TextStyle(fontSize: 16)),
+              label: const Text('받은 사진 고르기'),
             ),
             if (_picked != null) ...[
               const SizedBox(height: 12),
               ClipRRect(
                 borderRadius: BorderRadius.circular(12),
-                child: Image.file(File(_picked!.path),
-                    height: 180, fit: BoxFit.cover),
+                child: Image.memory(_picked!, height: 180, fit: BoxFit.cover),
               ),
               const SizedBox(height: 8),
               Text(
@@ -167,6 +191,18 @@ class _StampScreenState extends State<StampScreen> {
                         '${_existingDate != null ? " · 촬영일 $_existingDate" : ""}',
                 style: TextStyle(color: Theme.of(context).colorScheme.primary),
               ),
+              if (_latLng != null) ...[
+                const SizedBox(height: 4),
+                Text('사진 속 위치: ${shortLatLng(_latLng!)} (기록할 때 그대로 둬요)'),
+              ],
+              if (_gps == GpsState.blank) ...[
+                const SizedBox(height: 8),
+                GpsHiddenNotice(
+                  count: 1,
+                  library: widget.library,
+                  kind: GpsNoticeKind.stamp,
+                ),
+              ],
               const SizedBox(height: 12),
               TextFormField(
                 controller: _itemCtrl,
@@ -191,7 +227,8 @@ class _StampScreenState extends State<StampScreen> {
                   side: BorderSide(color: Theme.of(context).dividerColor),
                   borderRadius: BorderRadius.circular(4),
                 ),
-                title: Text('기록 날짜: ${DateFormat('yyyy년 M월 d일').format(_date)}'),
+                title:
+                    Text('기록 날짜: ${DateFormat('yyyy년 M월 d일').format(_date)}'),
                 trailing: const Icon(Icons.calendar_month),
                 onTap: _pickDate,
               ),
@@ -235,12 +272,13 @@ class _StampScreenState extends State<StampScreen> {
               FilledButton.icon(
                 onPressed: _busy ? null : _save,
                 icon: const Icon(Icons.verified),
-                label: const Text('기록 새겨서 보관하기', style: TextStyle(fontSize: 16)),
+                label: const Text('기록 새겨서 보관하기'),
               ),
               if (_savedPath != null) ...[
                 const SizedBox(height: 8),
                 OutlinedButton.icon(
-                  onPressed: () => Share.shareXFiles([XFile(_savedPath!)]),
+                  onPressed: () => SharePlus.instance
+                      .share(ShareParams(files: [XFile(_savedPath!)])),
                   icon: const Icon(Icons.ios_share),
                   label: const Text('기록된 사진 공유'),
                 ),

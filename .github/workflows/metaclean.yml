@@ -72,10 +72,26 @@ jobs:
           M=android/app/src/main/AndroidManifest.xml
           sed -i 's/android:label="metaclean"/android:label="메타지우개 플러스"/' "$M"
           # INTERNET: 새 버전 확인에만 쓴다. WRITE_EXTERNAL_STORAGE: 옛 안드로이드(9 이하) 갤러리 저장용.
-          sed -i '0,/<application/s//<uses-permission android:name="android.permission.INTERNET" \/>\n    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="28" \/>\n    <application/' "$M"
+          # 사진을 원본 그대로(촬영 위치 포함) 읽기: 앱 안 고르기 화면이 폰의 사진 보관함(MediaStore)에서
+          # 직접 읽는다 (photo_manager, setRequireOriginal). 시스템 고르기 창은 위치를 가려서 넘겨준다.
+          #   READ_MEDIA_IMAGES: 사진 보기 (안드로이드 13+)
+          #   READ_MEDIA_VISUAL_USER_SELECTED: 안드로이드 14+ "일부 사진만 허용"을 앱이 알아듣게
+          #   READ_EXTERNAL_STORAGE(maxSdkVersion 32): 사진 보기 (안드로이드 12 이하)
+          #   ACCESS_MEDIA_LOCATION: 사진 속 촬영 위치를 가리지 않고 읽기 (안드로이드 10+)
+          sed -i '0,/<application/s//<uses-permission android:name="android.permission.INTERNET" \/>\n    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="28" \/>\n    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" \/>\n    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" \/>\n    <uses-permission android:name="android.permission.READ_MEDIA_VISUAL_USER_SELECTED" \/>\n    <uses-permission android:name="android.permission.ACCESS_MEDIA_LOCATION" \/>\n    <application/' "$M"
           cat "$M"
           grep -q 'android:label="메타지우개 플러스"' "$M"
           grep -q 'android.permission.INTERNET' "$M"
+          grep -q 'android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32"' "$M"
+          grep -q 'android.permission.READ_MEDIA_IMAGES' "$M"
+          grep -q 'android.permission.READ_MEDIA_VISUAL_USER_SELECTED' "$M"
+          grep -q 'android.permission.ACCESS_MEDIA_LOCATION' "$M"
+          # 권한이 꼭 한 번씩만 들어갔는지 (두 번 들어가면 매니페스트 합치기가 깨질 수 있다)
+          test "$(grep -c '<uses-permission' "$M")" -eq 6
+          # 권한 부품(permission_handler)이 안드로이드 37 기준으로 만들어져 있다 (사진 보관함 부품 photo_manager 는 36). 개인비서와 같게 맞춘다.
+          G=android/app/build.gradle.kts
+          sed -i 's/compileSdk = flutter.compileSdkVersion/compileSdk = maxOf(flutter.compileSdkVersion, 37)/' "$G"
+          grep -q 'compileSdk = maxOf(flutter.compileSdkVersion, 37)' "$G"
       - name: APK 빌드
         working-directory: apps/metaclean
         env:

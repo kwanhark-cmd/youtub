@@ -96,7 +96,7 @@ class _ModuleHostState extends State<ModuleHost> {
                     key: const Key('module-back'),
                     onPressed: _back,
                     icon: const Icon(Icons.arrow_back, color: Colors.white),
-                    label: const Text('뒤로', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700)),
+                    label: const Text('뒤로', style: TextStyle(color: Colors.white, fontSize: AssistantTheme.labelSize, fontWeight: FontWeight.w700)),
                   ),
                   Expanded(
                     child: Text(m.title, textAlign: TextAlign.center, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.w700)),
@@ -105,7 +105,7 @@ class _ModuleHostState extends State<ModuleHost> {
                     key: const Key('module-home'),
                     onPressed: () => Navigator.of(context).popUntil((r) => r.isFirst),
                     icon: const Icon(Icons.home_rounded, color: Colors.white),
-                    label: Text(widget.state.settings.appName, style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700)),
+                    label: Text(widget.state.settings.appName, style: const TextStyle(color: Colors.white, fontSize: AssistantTheme.labelSize, fontWeight: FontWeight.w700)),
                   ),
                 ]),
               ),

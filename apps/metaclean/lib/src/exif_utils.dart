@@ -3,6 +3,8 @@ import 'dart:typed_data';
 import 'package:image/image.dart' as img;
 import 'package:intl/intl.dart';
 
+import 'photo_gps.dart';
+
 /// EXIF 날짜 형식 (yyyy:MM:dd HH:mm:ss).
 String exifDate(DateTime t) => DateFormat('yyyy:MM:dd HH:mm:ss').format(t);
 
@@ -94,6 +96,8 @@ bool applyStamp(
       gpsOk = false;
     }
   }
+  // 새 좌표를 적지 않았으면, 받은 사진의 비어 있는(가려진) 위치 칸은 떼어 낸다.
+  if (!gpsOk) dropBrokenGps(exif);
   return gpsOk;
 }
 

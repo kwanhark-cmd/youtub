@@ -19,7 +19,7 @@ env:
 
 jobs:
   test:
-    name: 검사·테스트 (다섯 모듈 + 공통 + 본체)
+    name: 검사·테스트 (여섯 모듈 + 공통 + 본체)
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
@@ -53,6 +53,12 @@ jobs:
       - name: 금고 모듈 기존 테스트 (호환 테스트 포함)
         working-directory: packages/vault
         run: flutter test
+      - name: 메타지우개 플러스 모듈 기존 테스트 (workspace 밖 단독 앱, 자기 pubspec.lock 으로)
+        working-directory: apps/metaclean
+        run: |
+          flutter pub get
+          flutter analyze
+          flutter test
 
   engine-test:
     name: 하드 엔진 테스트
