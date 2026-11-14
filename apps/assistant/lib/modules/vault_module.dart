@@ -10,6 +10,7 @@ import 'package:flutter/widgets.dart';
 
 import '../app/assistant_state.dart';
 import 'lazy.dart';
+import 'look_sync.dart';
 
 /// 계정·구독 금고 모듈.
 ///
@@ -37,7 +38,11 @@ class VaultModule extends PackagedModule {
   String get package => 'account_vault';
 
   @override
-  Future<Widget> open() async => vaultApp(await lazy.get());
+  Future<Widget> open() async {
+    final c = await lazy.get();
+    await applyLookToVault(c, s.settings);
+    return vaultApp(c);
+  }
 
   /// 열려 있을 때만 자료. 잠겨 있거나 아직 띄우지 않았으면 null.
   AppController? get _open {

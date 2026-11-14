@@ -6,6 +6,8 @@ import 'package:ai_chat_organizer/services/app_controller.dart';
 import 'package:ai_chat_organizer/voice/voice_service.dart';
 import 'package:assistant_core/assistant_core.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:ai_chat_organizer/services/settings.dart' show FontSize, ThemeChoice;
+
 import 'package:personal_assistant/app/keys.dart';
 import 'package:personal_assistant/modules/chats_module.dart';
 
@@ -159,6 +161,26 @@ void main() {
     c.updateSettings((s) => s.latestVersion = '99.0.0');
     expect(c.hostedByAssistant, isTrue);
     expect(c.hasUpdateBadge, isFalse);
+    c.signOut();
+  });
+
+  test('개인비서 보기 설정(글씨·테마·고대비·움직임)이 열 때 넘어가고 첫 안내는 건너뜀', () async {
+    final s = fakeState(root);
+    final c = await _withRealChats(root);
+    s.settings
+      ..textSize = TextSize.huge
+      ..themeMode = 'dark'
+      ..highContrast = true
+      ..reduceMotion = true;
+    await ChatsModule(s, make: () async => c).open();
+    expect(c.settings.fontSize, FontSize.xlarge);
+    expect(c.settings.theme, ThemeChoice.dark);
+    expect(c.settings.highContrast, isTrue);
+    expect(c.settings.reduceMotion, isTrue);
+    expect(c.settings.onboardingDone, isTrue);
+    s.settings.textSize = TextSize.normal;
+    await ChatsModule(s, make: () async => c).open();
+    expect(c.settings.fontSize, FontSize.normal);
     c.signOut();
   });
 }

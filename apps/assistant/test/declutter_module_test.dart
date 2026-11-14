@@ -8,6 +8,8 @@ import 'package:binugi/services/image_service.dart';
 import 'package:binugi/services/secret_store.dart';
 import 'package:binugi/state/app_state.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:binugi/theme/app_theme.dart' show TextSizeChoice, ThemeModeChoice;
+
 import 'package:path/path.dart' as p;
 import 'package:personal_assistant/app/assistant_state.dart';
 import 'package:personal_assistant/app/keys.dart';
@@ -144,5 +146,20 @@ void main() {
 
   test('개인비서 입구(openDeclutterState): 단독 앱 업데이트 카드·배너 숨김', () async {
     expect(st.hostedByAssistant, isTrue);
+  });
+
+  test('개인비서 보기 설정이 열 때 넘어가고 첫 안내는 건너뜀', () async {
+    s.settings
+      ..textSize = TextSize.large
+      ..themeMode = 'dark'
+      ..reduceMotion = true;
+    await m.open();
+    expect(st.global.textSize, TextSizeChoice.large);
+    expect(st.global.theme, ThemeModeChoice.dark);
+    expect(st.global.reduceMotion, isTrue);
+    expect(st.global.onboarded, isTrue);
+    s.settings.highContrast = true;
+    await m.open();
+    expect(st.global.theme, ThemeModeChoice.highContrast);
   });
 }

@@ -10,6 +10,7 @@ import 'package:flutter/widgets.dart';
 import '../app/assistant_state.dart';
 import '../app/keys.dart';
 import 'lazy.dart';
+import 'look_sync.dart';
 
 class ChatsModule extends PackagedModule {
   /// [make]: 시험에서 기기 기능 없는 컨트롤러를 넣을 때 쓴다.
@@ -32,6 +33,7 @@ class ChatsModule extends PackagedModule {
   Future<Widget> open() async {
     final c = await lazy.get();
     await shareKeys(c); // 잠금 번호로 늦게 들어온 경우를 위해 한 번 더
+    applyLookToChats(c, s.settings);
     return chatsApp(c);
   }
 
