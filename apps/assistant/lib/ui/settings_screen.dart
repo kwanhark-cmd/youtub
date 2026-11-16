@@ -92,6 +92,13 @@ class SettingsScreen extends StatelessWidget {
               ),
               SwitchListTile(title: const Text('고대비 (글자 더 또렷하게)'), value: s.highContrast, onChanged: (v) => s.highContrast = v),
               SwitchListTile(title: const Text('움직임 줄이기'), value: s.reduceMotion, onChanged: (v) => s.reduceMotion = v),
+              SwitchListTile(
+                key: const Key('settings-match-colors'),
+                title: const Text('모듈 색을 타일 색에 맞추기'),
+                subtitle: const Text('채널 파랑 · 대화 보라 · 비우기 초록 · 금고 분홍. 끄면 각 모듈에서 고른 색 그대로예요.'),
+                value: s.matchModuleColors,
+                onChanged: (v) => s.matchModuleColors = v,
+              ),
             ]),
             group('모듈 사이 연결 (제안만 하고, 받기는 내가 눌러요)', [
               for (final k in LinkKind.values)

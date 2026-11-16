@@ -43,8 +43,14 @@ String vaultTheme(String mode, bool highContrast) => highContrast ? 'contrast' :
 
 Brightness get _platform => PlatformDispatcher.instance.platformBrightness;
 
+/// 타일 색에 맞춘 모듈 색 이름 (대화=보라, 비우기=숲 초록, 금고=자주(분홍에 가장 가까움)). 채널 기본색은 이미 파랑.
+const chatsTileColor = 'purple';
+const declutterTileColor = 'forest';
+const vaultTileColor = 'plum';
+
 void applyLookToChats(chats.AppController c, AppSettings s) {
   c.updateSettings((x) {
+    if (s.matchModuleColors) x.colorTheme = chatsTileColor;
     x.fontSize = chatsFont(s.textSize);
     x.theme = chatsTheme(s.themeMode);
     x.highContrast = s.highContrast;
@@ -59,6 +65,7 @@ Future<void> applyLookToDeclutter(declutter.AppState st, AppSettings s) async {
     ..theme = declutterTheme(s.themeMode, s.highContrast, _platform)
     ..reduceMotion = s.reduceMotion
     ..onboarded = true;
+  if (s.matchModuleColors) st.global.colorTheme = declutterTileColor;
   await st.saveGlobal();
 }
 
@@ -66,4 +73,5 @@ Future<void> applyLookToVault(vault.AppController c, AppSettings s) => c.updateS
       x.textScaleLevel = vaultTextLevel(s.textSize);
       x.themeMode = vaultTheme(s.themeMode, s.highContrast);
       x.reduceMotion = s.reduceMotion;
+      if (s.matchModuleColors) x.colorTheme = vaultTileColor;
     });

@@ -158,8 +158,13 @@ void main() {
     expect(st.global.theme, ThemeModeChoice.dark);
     expect(st.global.reduceMotion, isTrue);
     expect(st.global.onboarded, isTrue);
-    s.settings.highContrast = true;
+    expect(st.global.colorTheme, 'forest', reason: '타일 색(초록)에 맞춤');
+    s.settings
+      ..highContrast = true
+      ..matchModuleColors = false;
+    st.global.colorTheme = 'lake';
     await m.open();
+    expect(st.global.colorTheme, 'lake', reason: '끄면 모듈에서 고른 색 그대로');
     expect(st.global.theme, ThemeModeChoice.highContrast);
   });
 }

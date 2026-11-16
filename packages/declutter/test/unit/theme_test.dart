@@ -4,6 +4,17 @@ import 'package:flutter_test/flutter_test.dart';
 
 /// 대비 검사 (WCAG AA: 글자 4.5 이상)
 void main() {
+  test('숲(초록) 색: 흰 글씨와 대비 4.5 이상, 어두운 모드 색은 검은 글씨와 4.5 이상', () {
+    double ratio(Color a, Color b) {
+      final x = a.computeLuminance(), y = b.computeLuminance();
+      return (x > y ? x + 0.05 : y + 0.05) / (x > y ? y + 0.05 : x + 0.05);
+    }
+
+    final f = colorThemes['forest']!;
+    expect(ratio(f.light, const Color(0xFFFFFFFF)), greaterThanOrEqualTo(4.5));
+    expect(ratio(f.dark, const Color(0xFF000000)), greaterThanOrEqualTo(4.5));
+  });
+
   for (final mode in ThemeModeChoice.values) {
     final p = AppPalette.of(mode);
     group('대비 검사 $mode', () {

@@ -178,8 +178,12 @@ void main() {
     expect(c.settings.highContrast, isTrue);
     expect(c.settings.reduceMotion, isTrue);
     expect(c.settings.onboardingDone, isTrue);
+    expect(c.settings.colorTheme, 'purple', reason: '타일 색(보라)에 맞춤');
     s.settings.textSize = TextSize.normal;
+    s.settings.matchModuleColors = false;
+    c.updateSettings((x) => x.colorTheme = 'teal');
     await ChatsModule(s, make: () async => c).open();
+    expect(c.settings.colorTheme, 'teal', reason: '끄면 모듈에서 고른 색 그대로');
     expect(c.settings.fontSize, FontSize.normal);
     c.signOut();
   });
