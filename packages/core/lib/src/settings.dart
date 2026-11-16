@@ -116,6 +116,10 @@ class AppSettings extends ChangeNotifier {
   String get appName => get<String>('appName', '개인비서');
   set appName(String v) => set('appName', v.trim().isEmpty ? '개인비서' : v.trim());
 
+  /// 모듈 안의 주요색을 홈 타일 색(채널=파랑, 대화=보라, 비우기=초록, 금고=분홍)에 맞춘다. 끄면 모듈에서 고른 색 그대로.
+  bool get matchModuleColors => get<bool>('matchModuleColors', true);
+  set matchModuleColors(bool v) => set('matchModuleColors', v);
+
   // ---- 하드 엔진 ----
   String get engineUrl => get<String>('engineUrl', 'http://127.0.0.1:47810');
   set engineUrl(String v) => set('engineUrl', v.trim());

@@ -168,6 +168,8 @@ const colorThemes = <String, ColorTheme>{
   'earth': ColorTheme('흙 (갈색)', Color(0xFF5D4037), Color(0xFFD7B9A8)),
   'slate': ColorTheme('먹 (회청색)', Color(0xFF37474F), Color(0xFFB0BEC5)),
   'lake': ColorTheme('호수 (청록)', Color(0xFF00576B), Color(0xFF8ED3E3)),
+  // 개인비서 안에서 "물건 비우기" 타일 색(초록)과 맞추는 색
+  'forest': ColorTheme('숲 (초록)', Color(0xFF1E6B3A), Color(0xFF9BD8AE)),
 };
 
 /// 글자 위계 4단계: 큰 숫자 > 제목 > 본문 > 설명

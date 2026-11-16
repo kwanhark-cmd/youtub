@@ -30,7 +30,7 @@ class _SearchScreenState extends State<SearchScreen> {
           if (snap.hasError) {
             return Notice(icon: 'mascot_warning', title: '찾지 못했어요', action: '다시 시도', onAction: () => setState(() => _f = _run()));
           }
-          if (!snap.hasData) return const Notice(icon: 'mascot_working', title: '다섯 곳에서 찾는 중…');
+          if (!snap.hasData) return const Notice(icon: 'mascot_working', title: '모든 모듈에서 찾는 중…');
           final r = snap.data!;
           if (r.isEmpty) {
             return Notice(icon: 'search', title: '찾은 것이 없어요', body: '다른 말로 찾아보거나, 모듈을 한 번 열어 자료를 불러온 뒤 다시 찾아보세요.', action: '다시 찾기', onAction: () => setState(() => _f = _run()));

@@ -310,11 +310,14 @@ void main() {
     expect(c.settings.textScaleLevel, 2);
     expect(c.settings.themeMode, 'light');
     expect(c.settings.reduceMotion, isTrue);
+    expect(c.settings.colorTheme, 'plum', reason: '타일 색(분홍)에 가장 가까운 자주');
     m.s.settings
+      ..matchModuleColors = false
       ..textSize = TextSize.normal
       ..highContrast = true;
     await m.open();
     expect(c.settings.textScaleLevel, 0);
     expect(c.settings.themeMode, 'contrast');
+    expect(c.settings.colorTheme, 'plum', reason: '끄면 그대로 둠');
   });
 }

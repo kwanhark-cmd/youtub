@@ -28,7 +28,7 @@ class Speaker {
   }
 }
 
-/// 마이크 하나로 다섯 모듈 명령. 마이크가 안 되는 기기는 글자 입력칸으로 자동 대체.
+/// 마이크 하나로 모든 모듈 명령. 마이크가 안 되는 기기는 글자 입력칸으로 자동 대체.
 class VoiceSheet extends StatefulWidget {
   const VoiceSheet({super.key, required this.state, required this.today, required this.openModule});
   final AssistantState state;

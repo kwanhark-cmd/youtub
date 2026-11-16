@@ -138,7 +138,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 controller: _search,
                 textInputAction: TextInputAction.search,
                 decoration: InputDecoration(
-                  hintText: '다섯 곳에서 한 번에 찾기 (영상·대화·파일·물건·구독)',
+                  hintText: '모든 모듈에서 한 번에 찾기 (영상·대화·파일·물건·구독·사진)',
                   prefixIcon: const Icon(Icons.search_rounded),
                   filled: true,
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(28), borderSide: BorderSide.none),
