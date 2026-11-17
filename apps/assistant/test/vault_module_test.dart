@@ -220,7 +220,7 @@ void main() {
     await fill(c);
     await m.lazy.get();
 
-    expect(await m.statusLine(), '구독 2개 · 이번 달 46,000원');
+    expect(await m.statusLine(), '구독 2개 · 이번 달 46,000원 · 건강 100점');
 
     final items = await m.today();
     final texts = items.map((e) => e.text).toList();
@@ -319,5 +319,24 @@ void main() {
     expect(c.settings.textScaleLevel, 0);
     expect(c.settings.themeMode, 'contrast');
     expect(c.settings.colorTheme, 'plum', reason: '끄면 그대로 둠');
+  });
+
+  test('금고 건강 점수: 튼튼하면 조용히, 같은 비밀번호가 생기면 오늘 할 일·상태 줄에 (비밀번호는 안 나옴)', () async {
+    await c.createProfile('테스트', fakeMaster);
+    await fill(c);
+    await m.lazy.get();
+    expect((await m.today()).where((t) => t.text.contains('건강')), isEmpty, reason: '두 계정 모두 튼튼하고 다름');
+    expect(await m.statusLine(), contains('건강 100점'));
+
+    await c.mutate((d) {
+      for (final a in d.accounts) {
+        if (a.serviceName == 'Facebook') a.password = fakePw;
+      }
+    });
+    final h = (await m.today()).singleWhere((t) => t.text.contains('건강'));
+    expect(h.text, '금고 건강 0점 — 같은 비밀번호 2곳 바꾸기');
+    expect(h.urgency, 70);
+    expect(await m.statusLine(), contains('건강 0점'));
+    expectNoSecrets([h.text, await m.statusLine()]);
   });
 }
