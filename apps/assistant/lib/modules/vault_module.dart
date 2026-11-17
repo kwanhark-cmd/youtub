@@ -1,6 +1,7 @@
 import 'package:account_vault/app/app_controller.dart';
 import 'package:account_vault/assistant_entry.dart';
 import 'package:account_vault/data/models.dart';
+import 'package:account_vault/logic/cleanup.dart';
 import 'package:account_vault/logic/dates.dart';
 import 'package:account_vault/logic/money.dart';
 import 'package:account_vault/logic/services_catalog.dart';
@@ -61,7 +62,9 @@ class VaultModule extends PackagedModule {
     final c = _open;
     if (c == null) return lazy.value == null ? '마스터 비밀번호로 열기' : '잠겨 있어요';
     final sum = summarize(c.data);
-    return '구독 ${sum.activeCount}개 · 이번 달 ${formatWon(sum.monthly)}';
+    final line = '구독 ${sum.activeCount}개 · 이번 달 ${formatWon(sum.monthly)}';
+    if (c.data.accounts.isEmpty) return line;
+    return '$line · 건강 ${vaultHealth(c.data, c.now()).score}점';
   }
 
   @override
@@ -71,7 +74,8 @@ class VaultModule extends PackagedModule {
       if (!await _anyProfile()) return const [];
       return const [TodayItem(module: ModuleId.vault, text: '금고를 열면 만료 임박 구독을 알려 드려요', urgency: 10, actionLabel: '금고 열기')];
     }
-    return vaultTodayItems(c.data, c.now());
+    final health = vaultHealthItem(c.data, c.now());
+    return [...vaultTodayItems(c.data, c.now()), ?health];
   }
 
   @override
@@ -270,4 +274,22 @@ List<SearchHit> vaultSearch(VaultData d, String query) {
   }
   out.removeWhere((h) => _containsSecret('${h.title} ${h.subtitle ?? ''}', d));
   return out;
+}
+
+/// 금고 건강 점수(0~100, 문제 없는 계정 비율)가 80점 아래면 "오늘 할 일" 한 줄.
+/// 몇 곳인지만 말하고, 어느 계정·어떤 비밀번호인지는 절대 넣지 않는다.
+TodayItem? vaultHealthItem(VaultData d, DateTime now) {
+  if (!d.accounts.any((a) => a.hasPassword)) return null;
+  final r = vaultHealth(d, now);
+  if (r.score >= 80) return null;
+  final parts = [
+    for (final i in const [HealthIssue.reused, HealthIssue.weak, HealthIssue.old])
+      if (r.count(i) > 0) '${switch (i) { HealthIssue.reused => '같은 비밀번호', HealthIssue.weak => '약한 비밀번호', _ => '오래된 비밀번호' }} ${r.count(i)}곳',
+  ];
+  return TodayItem(
+    module: ModuleId.vault,
+    text: '금고 건강 ${r.score}점 — ${parts.join('·')} 바꾸기',
+    urgency: (100 - r.score).clamp(30, 70),
+    actionLabel: '금고 건강 보기',
+  );
 }
