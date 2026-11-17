@@ -221,4 +221,7 @@ class ChatsModule extends PackagedModule {
     }
     return h.toRadixString(16).padLeft(8, '0');
   }
+
+  /// 내 자료 폴더 연결: 폴더 안의 대화 내보내기 파일(zip·json·html)을 모두 가져온다 (읽기만, 같은 대화는 늘리지 않음).
+  Future<({int files, int done, int failed})?> importFolder(String dir) async => importChatsFolder(await lazy.get(), dir);
 }

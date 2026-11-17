@@ -386,3 +386,55 @@ Future<bool> addSuggestedMaterial(
   u.env.logger.info('개인비서 소재 ${r.added}개를 코너에 넣음 ($fromName, 확인 필요 ${r.needCheck}개)');
   return r.added > 0;
 }
+
+/// 개인비서 "내 자료 폴더 연결": 컴퓨터 폴더 하나를 채널 "내 코너" 하나로 연결한다.
+/// 폴더 이름·위치·파일은 절대 바꾸지 않고 읽기만 한다. 하위 폴더는 [maxDepth] 단계까지 본다.
+/// 이미 코너에 들어간 파일(같은 경로)은 다시 넣지 않는다. 파일 이름이 방송·영화처럼 보이면 저작권 확인 필요로 넣는다.
+/// 채널이 아직 없으면 코너를 만들 수 없어 null.
+Future<({int added, int needCheck, int skipped})?> connectFolderToChannel(UserContext u, String dir, {int maxDepth = 2}) async {
+  final cs = _corner(u);
+  final chans = u.youtube.channels();
+  if (cs == null || chans.isEmpty || !Directory(dir).existsSync()) return null;
+  final name = '📁 ${p.basename(dir)}';
+  final corner = cs.corners().where((c) => c.name == name).firstOrNull ?? cs.create(name, chans.first.channelId);
+  final have = cs.items(corner.id).map((i) => i.path).toSet();
+  final src = _TreeSource(dir, maxDepth, have);
+  final r = await cs.importFrom(corner.id, src);
+  u.env.logger.info('폴더 연결: 코너에 소재 ${r.added}개 (이미 있음 ${src.skipped}개)');
+  return (added: r.added, needCheck: r.needCheck, skipped: src.skipped);
+}
+
+/// 폴더와 그 아래 폴더들(깊이 제한)의 소재. 숨김 폴더는 보지 않는다.
+class _TreeSource implements MaterialSource {
+  _TreeSource(this.dir, this.maxDepth, this.have);
+  final String dir;
+  final int maxDepth;
+  final Set<String> have;
+  int skipped = 0;
+
+  @override
+  String get name => p.basename(dir);
+
+  @override
+  Future<List<MaterialItem>> list() async {
+    final out = <MaterialItem>[];
+    Future<void> walk(String d, int depth) async {
+      for (final m in await FolderMaterialSource(d).list()) {
+        if (have.contains(m.path)) {
+          skipped++;
+        } else {
+          out.add(m);
+        }
+      }
+      if (depth >= maxDepth) return;
+      final subs = Directory(d).listSync().whereType<Directory>().where((x) => !p.basename(x.path).startsWith('.')).toList()
+        ..sort((a, b) => a.path.compareTo(b.path));
+      for (final s in subs) {
+        await walk(s.path, depth + 1);
+      }
+    }
+
+    await walk(dir, 0);
+    return out;
+  }
+}
