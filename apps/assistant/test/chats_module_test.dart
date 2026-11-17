@@ -187,4 +187,28 @@ void main() {
     expect(c.settings.fontSize, FontSize.normal);
     c.signOut();
   });
+
+  test('내 자료 폴더 연결: 저장소 폴더(하위 폴더 포함)의 내보내기 파일을 모두 가져오고, 다시 해도 대화가 늘지 않음', () async {
+    final s = fakeState(root);
+    final c = _controller(root);
+    await c.init();
+    await signInAs(c, '나');
+    final dir = Directory('${root.path}/praha/Claude 저장소')..createSync(recursive: true);
+    File('$_samples/claude_sample.json').copySync('${dir.path}/conversations.json');
+    Directory('${dir.path}/2026-10').createSync();
+    File('$_samples/chatgpt_sample.json').copySync('${dir.path}/2026-10/chatgpt.json');
+    File('${dir.path}/읽어보기.txt').writeAsStringSync('대화 아님');
+    final m = ChatsModule(s, make: () async => c);
+
+    final r = (await m.importFolder(dir.path))!;
+    expect(r.files, 2);
+    expect(r.done, 2);
+    final n = c.session!.store.count();
+    expect(n, greaterThan(0));
+    final r2 = (await m.importFolder(dir.path))!;
+    expect(r2.done, 2);
+    expect(c.session!.store.count(), n, reason: '같은 대화는 늘지 않음');
+    expect(File('${dir.path}/conversations.json').existsSync(), isTrue, reason: '원본은 그대로');
+    c.signOut();
+  });
 }

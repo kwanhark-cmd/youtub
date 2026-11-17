@@ -145,4 +145,11 @@ class ChannelModule extends PackagedModule {
     if (u == null) return const {};
     return {'채널 구글 연결': u.googleConnected, '채널 AI 연결': u.aiConnected};
   }
+
+  /// 내 자료 폴더 연결: 폴더 하나를 채널 "내 코너" 하나로 (읽기만, 이미 넣은 파일은 건너뜀). 채널이 없으면 null.
+  Future<({int added, int needCheck, int skipped})?> connectFolder(String dir) async {
+    final u = _user(await lazy.get());
+    if (u == null) return null;
+    return connectFolderToChannel(u, dir);
+  }
 }

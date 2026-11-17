@@ -122,3 +122,39 @@ Future<List<ChatDecision>> chatsRecentDecisions(AppController c, {int limit = 20
   }
   return out;
 }
+
+/// 개인비서 "내 자료 폴더 연결": 폴더(와 그 아래 폴더)의 AI 대화 내보내기 파일을 모두 가져온다.
+/// 폴더·파일은 읽기만 하고 절대 바꾸지 않는다. 이미 있는 대화는 같은 대화로 알아보고 새로 늘리지 않는다.
+/// 잠금 번호 때문에 들어가 있지 않으면 null.
+Future<({int files, int done, int failed})?> importChatsFolder(AppController c, String dir, {int maxDepth = 4}) async {
+  if (c.session == null || !Directory(dir).existsSync()) return null;
+  const exts = ['.zip', '.json', '.html', '.htm'];
+  final found = <String>[];
+  void walk(Directory d, int depth) {
+    List<FileSystemEntity> list;
+    try {
+      list = d.listSync()..sort((a, b) => a.path.compareTo(b.path));
+    } catch (_) {
+      return;
+    }
+    for (final e in list) {
+      final name = e.uri.pathSegments.where((x) => x.isNotEmpty).last;
+      if (name.startsWith('.')) continue;
+      if (e is File && exts.any((x) => name.toLowerCase().endsWith(x))) found.add(e.path);
+      if (e is Directory && depth < maxDepth) walk(e, depth + 1);
+    }
+  }
+
+  walk(Directory(dir), 0);
+  var done = 0, failed = 0;
+  for (final f in found) {
+    final j = await c.importFile(f);
+    if (j?.state == JobState.done) {
+      done++;
+    } else {
+      failed++;
+    }
+  }
+  AppLog.info('폴더 연결: 대화 파일 ${found.length}개 (가져옴 $done, 못 읽음 $failed)');
+  return (files: found.length, done: done, failed: failed);
+}

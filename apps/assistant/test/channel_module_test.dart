@@ -245,4 +245,32 @@ void main() {
     expect(st.hostedByAssistant, isTrue);
     expect(st.env.installUpdate, isNull, reason: '단독 앱 설치 파일을 받아 설치하지 않음');
   });
+
+  test('내 자료 폴더 연결: 폴더 → "📁 이름" 코너, 하위 폴더까지, 두 번째엔 새 파일만, 폴더는 그대로', () async {
+    final m = module();
+    final dir = Directory('${root.path}/praha/[확정영상-납품]')..createSync(recursive: true);
+    File('${dir.path}/세븐스플릿_완성.mp4').writeAsBytesSync([1, 2, 3]);
+    File('${dir.path}/표지.jpg').writeAsBytesSync([1]);
+    File('${dir.path}/메모.pdf').writeAsBytesSync([1]); // 소재가 아닌 파일은 건너뜀
+    Directory('${dir.path}/1편').createSync();
+    File('${dir.path}/1편/원본.mov').writeAsBytesSync([1]);
+    Directory('${dir.path}/.숨김').createSync();
+    File('${dir.path}/.숨김/x.mp4').writeAsBytesSync([1]);
+    final before = dir.listSync(recursive: true).map((e) => e.path).toSet();
+
+    expect(await m.connectFolder(dir.path), isNull, reason: '채널이 없으면 코너를 만들 수 없음');
+    final u = await withChannels(m);
+    final r = (await m.connectFolder(dir.path))!;
+    expect(r.added, 3);
+    expect(r.skipped, 0);
+    final cs = u.extensions['corner'] as CornerService;
+    final corner = cs.corners().singleWhere((c) => c.name == '📁 [확정영상-납품]');
+    expect(cs.items(corner.id).map((i) => i.path.split('/').last).toSet(), {'세븐스플릿_완성.mp4', '표지.jpg', '원본.mov'});
+
+    File('${dir.path}/새영상.mp4').writeAsBytesSync([1]);
+    final r2 = (await m.connectFolder(dir.path))!;
+    expect(r2.added, 1);
+    expect(r2.skipped, 3);
+    expect(dir.listSync(recursive: true).map((e) => e.path).toSet(), {...before, '${dir.path}/새영상.mp4'}, reason: '폴더·파일은 바꾸지 않음');
+  });
 }

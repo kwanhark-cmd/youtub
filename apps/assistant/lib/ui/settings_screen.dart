@@ -9,6 +9,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../app/assistant_state.dart';
 import 'connections_screen.dart';
+import 'folders_screen.dart';
 import 'import_screen.dart';
 import 'widgets.dart';
 
@@ -63,6 +64,13 @@ class SettingsScreen extends StatelessWidget {
                 title: const Text('연결 상태'),
                 subtitle: const Text('구글·AI·힉스필드·피그마·하드 엔진·얼굴 모델'),
                 onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => ConnectionsScreen(state: state))),
+              ),
+              ListTile(
+                key: const Key('settings-folders'),
+                leading: const Icon3d('folder', size: 36),
+                title: const Text('내 자료 폴더 연결'),
+                subtitle: const Text('컴퓨터의 AI 대화 저장소·영상 폴더를 찾아 모듈에 연결 (읽기만)'),
+                onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => FoldersScreen(state: state))),
               ),
               ListTile(
                 key: const Key('settings-import'),

@@ -82,6 +82,12 @@ cd packages/<모듈> && flutter test
 - 6단계 나머지 점검: 타임랩스 MP4(4번 1.1.0)·얼굴 모델 교체 안내(3번 1.1.0)는 원래 앱에서 이미 끝남.
   제미나이 한국어 파서는 실제 내보내기 파일이 있어야 확인 가능 → BLOCKERS.md
 
+## 내 자료 폴더 연결 (2026-11-17) — 끝난 것
+- 주인이 알려 준 맥북 폴더(/Users/praha/이관학 개인자료/…)를 클라우드에서 직접 볼 수 없어(맥북이 폴더를 안 열어 줌), 앱이 맥북에서 직접 찾아 연결하게 만듦
+- `apps/assistant/lib/app/data_folders.dart`(찾기·연결 목록), `folder_linker.dart`(연결·쉬운 말 결과), `ui/folders_screen.dart`(설정 → 내 자료 폴더 연결)
+- 대화: `importChatsFolder` (packages/chats/lib/assistant_entry.dart) / 채널: `connectFolderToChannel` (packages/channel/lib/assistant_entry.dart)
+- 읽기만 함·민감 폴더 제외·맥 보호 폴더 제외·다시 해도 중복 없음 — 주인 폴더 구조 그대로 만든 시험으로 확인 (본체 94개)
+
 ## 배포 기록
 - 2026-11-17 v1.1.3 공개 (Actions 실행 #43, 7개 작업 모두 통과): 모듈 색 맞추기·금고 건강 점수·검색 안내 문구
   https://github.com/kwanhark-cmd/youtub/releases/tag/v1.1.3
