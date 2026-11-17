@@ -89,6 +89,7 @@ cd packages/<모듈> && flutter test
 - 읽기만 함·민감 폴더 제외·맥 보호 폴더 제외·다시 해도 중복 없음 — 주인 폴더 구조 그대로 만든 시험으로 확인 (본체 94개)
 
 ## 배포 기록
+- 2026-11-17 v1.1.4 공개: 내 자료 폴더 연결 https://github.com/kwanhark-cmd/youtub/releases/tag/v1.1.4
 - 2026-11-17 v1.1.3 공개 (Actions 실행 #43, 7개 작업 모두 통과): 모듈 색 맞추기·금고 건강 점수·검색 안내 문구
   https://github.com/kwanhark-cmd/youtub/releases/tag/v1.1.3
 
